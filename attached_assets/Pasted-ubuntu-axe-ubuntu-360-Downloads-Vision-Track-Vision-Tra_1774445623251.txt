@@ -1,0 +1,22 @@
+ubuntu@axe-ubuntu-360:~/Downloads/Vision-Track/Vision-Track$ PORT=3000 BASE_PATH=/ pnpm --filter @workspace/visiontrack run dev
+
+> @workspace/visiontrack@0.0.0 dev /home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/visiontrack
+> vite --config vite.config.ts --host 0.0.0.0
+
+You are using Node.js 18.20.8. Vite requires Node.js version 20.19+ or 22.12+. Please upgrade your Node.js version.
+failed to load config from /home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/visiontrack/vite.config.ts
+error when starting dev server:
+Error: Cannot find native binding. npm has a bug related to optional dependencies (https://github.com/npm/cli/issues/4828). Please try `npm i` again after removing both package-lock.json and node_modules directory.
+    at Object.<anonymous> (/home/ubuntu/Downloads/Vision-Track/Vision-Track/node_modules/.pnpm/@tailwindcss+oxide@4.2.1/node_modules/@tailwindcss/oxide/index.js:559:11)
+    at Module._compile (node:internal/modules/cjs/loader:1364:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1422:10)
+    at Module.load (node:internal/modules/cjs/loader:1203:32)
+    at Module._load (node:internal/modules/cjs/loader:1019:12)
+    at ModuleWrap.<anonymous> (node:internal/modules/esm/translators:203:29)
+    at ModuleJob.run (node:internal/modules/esm/module_job:195:25)
+    at async ModuleLoader.import (node:internal/modules/esm/loader:337:24)
+    at async loadConfigFromBundledFile (file:///home/ubuntu/Downloads/Vision-Track/Vision-Track/node_modules/.pnpm/vite@7.3.1_@types+node@25.3.5_jiti@2.6.1_lightningcss@1.31.1_tsx@4.21.0_yaml@2.8.2/node_modules/vite/dist/node/chunks/config.js:35909:12)
+    at async bundleAndLoadConfigFile (file:///home/ubuntu/Downloads/Vision-Track/Vision-Track/node_modules/.pnpm/vite@7.3.1_@types+node@25.3.5_jiti@2.6.1_lightningcss@1.31.1_tsx@4.21.0_yaml@2.8.2/node_modules/vite/dist/node/chunks/config.js:35797:17)
+/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/visiontrack:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @workspace/visiontrack@0.0.0 dev: `vite --config vite.config.ts --host 0.0.0.0`
+Exit status 1
