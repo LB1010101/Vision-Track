@@ -1,0 +1,13 @@
+# VisionTrack Python detection dependencies
+# Install on your Lenovo P360 Ubuntu machine:
+#   pip install -r requirements.txt
+#
+# For Axelera Voyager SDK, install separately per Axelera's documentation:
+#   pip install axelera-runtime  (or follow your Voyager SDK setup guide)
+
+ultralytics>=8.0.0
+opencv-python>=4.8.0
+numpy>=1.24.0
+
+# Optional: ffmpeg Python bindings (ffprobe is used for metadata)
+# Ensure ffmpeg is installed on the system: sudo apt install ffmpeg
