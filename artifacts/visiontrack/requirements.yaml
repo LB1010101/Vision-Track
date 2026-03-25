@@ -1,0 +1,20 @@
+packages:
+  "framer-motion": "For smooth layout transitions and upload animations"
+  "react-dropzone": "For drag-and-drop video file uploading"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility to safely merge Tailwind CSS classes"
+  "date-fns": "For formatting job creation and update timestamps"
+  "lucide-react": "For crisp, professional icons"
+
+images:
+  - path: "artifacts/visiontrack/public/images/surveillance-bg.png"
+    description: "Dark, abstract tech background with subtle glowing cyan grid lines and lens flare, conveying a modern AI surveillance theme. Very dark slate/black base."
+    aspect_ratio: "16:9"
+  - path: "artifacts/visiontrack/public/images/logo-mark.png"
+    description: "Minimalist glowing cyan eye or camera lens geometric vector icon on transparent background"
+    aspect_ratio: "1:1"
+
+notes:
+  - "The API endpoints are mounted at /api"
+  - "Using custom XHR for video upload to support progress tracking, bypassing the generated upload hook"
+  - "Auto-triggering processing endpoint upon successful upload"
