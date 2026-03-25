@@ -62,6 +62,18 @@ export default defineConfig({
     port,
     host: "0.0.0.0",
     allowedHosts: true,
+    // On Replit, the shared proxy routes /api to the API server.
+    // Locally (P360), Vite proxies /api to the API server directly.
+    ...(process.env.REPL_ID
+      ? {}
+      : {
+          proxy: {
+            "/api": {
+              target: `http://localhost:${process.env.API_PORT ?? "8080"}`,
+              changeOrigin: true,
+            },
+          },
+        }),
     fs: {
       strict: true,
       deny: ["**/.*"],
