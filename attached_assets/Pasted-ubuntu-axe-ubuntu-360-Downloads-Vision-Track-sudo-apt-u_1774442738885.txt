@@ -1,0 +1,77 @@
+ubuntu@axe-ubuntu-360:~/Downloads/Vision-Track$ sudo apt update && sudo apt install -y \
+  ffmpeg \
+  python3 python3-pip python3-venv \
+  libgl1 libglib2.0-0   # OpenCV runtime deps
+Hit:1 https://linux.teamviewer.com/deb stable InRelease
+Hit:2 https://deb.nodesource.com/node_18.x nodistro InRelease                  
+Hit:3 http://nl.archive.ubuntu.com/ubuntu jammy InRelease                      
+Hit:4 http://lenovo.archive.canonical.com jammy InRelease                      
+Hit:5 http://security.ubuntu.com/ubuntu jammy-security InRelease               
+Hit:6 https://dl.google.com/linux/chrome/deb stable InRelease                  
+Hit:7 http://nl.archive.ubuntu.com/ubuntu jammy-updates InRelease              
+Hit:8 https://esm.ubuntu.com/apps/ubuntu jammy-apps-security InRelease         
+Hit:9 http://nl.archive.ubuntu.com/ubuntu jammy-backports InRelease            
+Hit:10 https://esm.ubuntu.com/apps/ubuntu jammy-apps-updates InRelease         
+Hit:11 https://esm.ubuntu.com/infra/ubuntu jammy-infra-security InRelease
+Hit:12 https://esm.ubuntu.com/infra/ubuntu jammy-infra-updates InRelease
+Hit:13 https://software.axelera.ai/artifactory/axelera-apt-source ubuntu22 InRelease
+Reading package lists... Done                        
+Building dependency tree... Done
+Reading state information... Done
+85 packages can be upgraded. Run 'apt list --upgradable' to see them.
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+libgl1 is already the newest version (1.4.0-1).
+libglib2.0-0 is already the newest version (2.72.4-0ubuntu2.9).
+python3 is already the newest version (3.10.6-1~22.04.1).
+python3-pip is already the newest version (22.0.2+dfsg-1ubuntu0.7).
+python3-venv is already the newest version (3.10.6-1~22.04.1).
+ffmpeg is already the newest version (7:4.4.2-0ubuntu0.22.04.1+esm11).
+The following packages were automatically installed and are no longer required:
+  gyp javascript-common libjs-events libjs-highlight.js libjs-inherits
+  libjs-is-typedarray libjs-psl libjs-source-map libjs-sprintf-js
+  libjs-typedarray-to-buffer libuv1-dev node-abab node-abbrev node-agent-base
+  node-ansi-regex node-ansi-styles node-ansistyles node-aproba node-archy
+  node-are-we-there-yet node-argparse node-arrify node-asap node-asynckit
+  node-balanced-match node-brace-expansion node-builtins node-chalk
+  node-chownr node-clean-yaml-object node-cli-table node-clone
+  node-color-convert node-color-name node-colors node-columnify
+  node-combined-stream node-commander node-console-control-strings
+  node-core-util-is node-cssom node-cssstyle node-debug
+  node-decompress-response node-defaults node-delayed-stream node-delegates
+  node-depd node-diff node-encoding node-end-of-stream node-err-code
+  node-escape-string-regexp node-events node-fancy-log node-foreground-child
+  node-fs-write-stream-atomic node-fs.realpath node-function-bind node-gauge
+  node-get-stream node-glob node-got node-graceful-fs node-growl node-has-flag
+  node-has-unicode node-hosted-git-info node-https-proxy-agent node-iconv-lite
+  node-iferr node-imurmurhash node-indent-string node-inflight node-inherits
+  node-ini node-ip node-ip-regex node-is-buffer node-is-plain-obj
+  node-is-typedarray node-isarray node-isexe node-json-buffer
+  node-json-parse-better-errors node-jsonparse node-kind-of node-lcov-parse
+  node-lodash-packages node-log-driver node-lowercase-keys node-lru-cache
+  node-mimic-response node-minimatch node-minimist node-minipass node-ms
+  node-mute-stream node-negotiator node-normalize-package-data
+  node-npm-bundled node-npm-package-arg node-npmlog node-object-assign
+  node-once node-osenv node-p-cancelable node-p-map node-path-is-absolute
+  node-process-nextick-args node-promise-inflight node-promise-retry
+  node-promzard node-psl node-pump node-punycode node-quick-lru node-read
+  node-read-package-json node-readable-stream node-resolve node-retry
+  node-rimraf node-run-queue node-safe-buffer node-semver node-set-blocking
+  node-signal-exit node-slash node-slice-ansi node-source-map
+  node-source-map-support node-spdx-correct node-spdx-exceptions
+  node-spdx-expression-parse node-spdx-license-ids node-sprintf-js node-ssri
+  node-stack-utils node-stealthy-require node-string-decoder node-string-width
+  node-strip-ansi node-supports-color node-text-table node-time-stamp
+  node-tmatch node-tough-cookie node-typedarray-to-buffer node-unique-filename
+  node-universalify node-util-deprecate node-validate-npm-package-license
+  node-validate-npm-package-name node-wcwidth.js node-webidl-conversions
+  node-whatwg-fetch node-wide-align node-wrappy node-write-file-atomic
+  node-yallist
+Use 'sudo apt autoremove' to remove them.
+0 upgraded, 0 newly installed, 0 to remove and 85 not upgraded.
+ubuntu@axe-ubuntu-360:~/Downloads/Vision-Track$ cd Downloads/visiontrack/artifacts/api-server
+bash: cd: Downloads/visiontrack/artifacts/api-server: No such file or directory
+ubuntu@axe-ubuntu-360:~/Downloads/Vision-Track$ cd Downloads/vision-track/artifacts/api-server
+bash: cd: Downloads/vision-track/artifacts/api-server: No such file or directory
+ubuntu@axe-ubuntu-360:~/Downloads/Vision-Track$ 
