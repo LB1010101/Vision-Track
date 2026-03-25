@@ -1,0 +1,120 @@
+ubuntu@axe-ubuntu-360:~/Downloads/Vision-Track/Vision-Track$ cd ~/Downloads/Vision-Track/Vision-Track
+DATABASE_URL=postgresql://visiontrack:visiontrack@localhost:5432/visiontrack pnpm --filter @workspace/db run db:push
+ ERR_PNPM_RECURSIVE_RUN_NO_SCRIPT  None of the selected packages has a "db:push" script
+ubuntu@axe-ubuntu-360:~/Downloads/Vision-Track/Vision-Track$ PORT=8080 DATABASE_URL=postgresql://visiontrack:visiontrack@localhost:5432/visiontrack pnpm --filter @workspace/api-server run dev
+
+> @workspace/api-server@0.0.0 dev /home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server
+> export NODE_ENV=development && pnpm run build && pnpm run start
+
+
+> @workspace/api-server@0.0.0 build /home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server
+> node ./build.mjs
+
+
+  dist/index.mjs                       4.4mb ⚠️
+  dist/pino-worker.mjs               153.4kb
+  dist/pino-file.mjs                 142.1kb
+  dist/pino-pretty.mjs               114.6kb
+  dist/thread-stream-worker.mjs        7.3kb
+  dist/index.mjs.map                   7.7mb
+  dist/pino-worker.mjs.map           256.9kb
+  dist/pino-file.mjs.map             229.1kb
+  dist/pino-pretty.mjs.map           203.9kb
+  dist/thread-stream-worker.mjs.map   12.0kb
+
+⚡ Done in 191ms
+
+> @workspace/api-server@0.0.0 start /home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server
+> node --enable-source-maps ./dist/index.mjs
+
+[15:53:30.450] INFO (29193): Server listening
+    port: 8080
+Error: Failed query: select "id", "filename", "original_name", "status", "file_size_bytes", "duration_seconds", "total_detections", "total_tracks", "error_message", "report_path", "created_at", "updated_at" from "jobs" order by "jobs"."created_at"
+params: 
+    at NodePgPreparedQuery.queryWithCache (/home/ubuntu/Downloads/Vision-Track/Vision-Track/node_modules/.pnpm/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/src/pg-core/session.ts:73:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async <anonymous> (/home/ubuntu/Downloads/Vision-Track/Vision-Track/node_modules/.pnpm/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/src/node-postgres/session.ts:154:19)
+    at async <anonymous> (/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/src/routes/jobs.ts:52:16)
+[15:54:08.505] INFO (29193): request errored
+    req: {
+      "id": 1,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 500
+    }
+    responseTime: 18
+    err: {
+      "type": "Error",
+      "message": "failed with status code 500",
+      "stack":
+          Error: failed with status code 500
+              at onResFinished (/home/ubuntu/Downloads/Vision-Track/Vision-Track/node_modules/.pnpm/pino-http@10.5.0/node_modules/pino-http/logger.js:115:39)
+              at ServerResponse.onResponseComplete (/home/ubuntu/Downloads/Vision-Track/Vision-Track/node_modules/.pnpm/pino-http@10.5.0/node_modules/pino-http/logger.js:178:14)
+              at ServerResponse.emit (node:events:531:35)
+              at onFinish (node:_http_outgoing:1084:10)
+              at callback (node:internal/streams/writable:766:21)
+              at afterWrite (node:internal/streams/writable:710:5)
+              at afterWriteTick (node:internal/streams/writable:696:10)
+              at process.processTicksAndRejections (node:internal/process/task_queues:88:21)
+    }
+Error: Failed query: select "id", "filename", "original_name", "status", "file_size_bytes", "duration_seconds", "total_detections", "total_tracks", "error_message", "report_path", "created_at", "updated_at" from "jobs" order by "jobs"."created_at"
+params: 
+    at NodePgPreparedQuery.queryWithCache (/home/ubuntu/Downloads/Vision-Track/Vision-Track/node_modules/.pnpm/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/src/pg-core/session.ts:73:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async <anonymous> (/home/ubuntu/Downloads/Vision-Track/Vision-Track/node_modules/.pnpm/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/src/node-postgres/session.ts:154:19)
+    at async <anonymous> (/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/src/routes/jobs.ts:52:16)
+[15:54:09.547] INFO (29193): request errored
+    req: {
+      "id": 2,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 500
+    }
+    responseTime: 17
+    err: {
+      "type": "Error",
+      "message": "failed with status code 500",
+      "stack":
+          Error: failed with status code 500
+              at onResFinished (/home/ubuntu/Downloads/Vision-Track/Vision-Track/node_modules/.pnpm/pino-http@10.5.0/node_modules/pino-http/logger.js:115:39)
+              at ServerResponse.onResponseComplete (/home/ubuntu/Downloads/Vision-Track/Vision-Track/node_modules/.pnpm/pino-http@10.5.0/node_modules/pino-http/logger.js:178:14)
+              at ServerResponse.emit (node:events:531:35)
+              at onFinish (node:_http_outgoing:1084:10)
+              at callback (node:internal/streams/writable:766:21)
+              at afterWrite (node:internal/streams/writable:710:5)
+              at afterWriteTick (node:internal/streams/writable:696:10)
+              at process.processTicksAndRejections (node:internal/process/task_queues:88:21)
+    }
+Error: Failed query: insert into "jobs" ("id", "filename", "original_name", "status", "file_size_bytes", "duration_seconds", "total_detections", "total_tracks", "error_message", "report_path", "created_at", "updated_at") values (default, $1, $2, $3, $4, default, default, default, default, default, default, default) returning "id", "filename", "original_name", "status", "file_size_bytes", "duration_seconds", "total_detections", "total_tracks", "error_message", "report_path", "created_at", "updated_at"
+params: 1774446852124-nelqo8zxpto.mp4,Video1 .mp4,pending,6180626
+    at NodePgPreparedQuery.queryWithCache (/home/ubuntu/Downloads/Vision-Track/Vision-Track/node_modules/.pnpm/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/src/pg-core/session.ts:73:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async <anonymous> (/home/ubuntu/Downloads/Vision-Track/Vision-Track/node_modules/.pnpm/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/src/node-postgres/session.ts:154:19)
+    at async <anonymous> (/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/src/routes/jobs.ts:62:17)
+[15:54:12.141] INFO (29193): request errored
+    req: {
+      "id": 3,
+      "method": "POST",
+      "url": "/api/upload"
+    }
+    res: {
+      "statusCode": 500
+    }
+    responseTime: 22
+    err: {
+      "type": "Error",
+      "message": "failed with status code 500",
+      "stack":
+          Error: failed with status code 500
+              at onResFinished (/home/ubuntu/Downloads/Vision-Track/Vision-Track/node_modules/.pnpm/pino-http@10.5.0/node_modules/pino-http/logger.js:115:39)
+              at ServerResponse.onResponseComplete (/home/ubuntu/Downloads/Vision-Track/Vision-Track/node_modules/.pnpm/pino-http@10.5.0/node_modules/pino-http/logger.js:178:14)
+              at ServerResponse.emit (node:events:531:35)
+              at onFinish (node:_http_outgoing:1084:10)
+              at callback (node:internal/streams/writable:766:21)
+              at afterWrite (node:internal/streams/writable:710:5)
+              at afterWriteTick (node:internal/streams/writable:696:10)
+              at process.processTicksAndRejections (node:internal/process/task_queues:88:21)
