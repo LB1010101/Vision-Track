@@ -637,8 +637,151 @@ async function generateExcelReport(
     ws.views = [{ state: "frozen", xSplit: 0, ySplit: 1 }];
   });
 
+  // ── Embed charts ─────────────────────────────────────────────────────────
+  try {
+    // Zone bar chart
+    if (sortedZones.length > 0) {
+      const zonePng = await svgToPng(generateBarChartSvg(
+        sortedZones.map(([z, d]) => ({ label: z.length > 14 ? z.slice(0, 13) + "…" : z, value: d.detections })),
+        "Detections by Zone", "#1E40AF"
+      ));
+      const zoneImgId = workbook.addImage({ buffer: zonePng, extension: "png" });
+      zoneSheet.addImage(zoneImgId, { tl: { col: 5, row: 0 }, br: { col: 13, row: 18 }, editAs: "oneCell" });
+    }
+
+    // Class bar chart
+    if (sortedClasses.length > 0) {
+      const classPng = await svgToPng(generateBarChartSvg(
+        sortedClasses.slice(0, 10).map(([c, d]) => ({ label: c, value: d.count })),
+        "Detections by Class", "#D97706"
+      ));
+      const classImgId = workbook.addImage({ buffer: classPng, extension: "png" });
+      classSheet.addImage(classImgId, { tl: { col: 8, row: 0 }, br: { col: 16, row: 18 }, editAs: "oneCell" });
+    }
+
+    // Timeline line chart
+    if (maxMinute > 0) {
+      const timelineEntries = Object.entries(minuteData)
+        .sort((a, b) => Number(a[0]) - Number(b[0]))
+        .map(([m, d]) => ({ label: `M${m}`, value: d.detections }));
+      const tlPng = await svgToPng(generateLineChartSvg(timelineEntries, "Detections Over Time", "#1E40AF"));
+      const tlImgId = workbook.addImage({ buffer: tlPng, extension: "png" });
+      const startRow = maxMinute + 3;
+      timelineSheet.addImage(tlImgId, { tl: { col: 0, row: startRow }, br: { col: 10, row: startRow + 16 }, editAs: "oneCell" });
+    }
+  } catch (chartErr) {
+    logger.warn({ err: chartErr }, "Chart generation skipped (non-fatal)");
+  }
+
   await workbook.xlsx.writeFile(outputPath);
   logger.info({ outputPath }, "Excel report written");
+}
+
+function esc(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function generateBarChartSvg(
+  data: { label: string; value: number }[],
+  title: string,
+  color: string,
+  width = 520,
+  height = 320
+): string {
+  if (data.length === 0) return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="${width}" height="${height}" fill="white"/></svg>`;
+  const pad = { top: 48, right: 24, bottom: 70, left: 56 };
+  const cw = width - pad.left - pad.right;
+  const ch = height - pad.top - pad.bottom;
+  const max = Math.max(...data.map(d => d.value), 1);
+  const barW = Math.max(8, (cw / data.length) * 0.65);
+  const gap = cw / data.length;
+
+  const yTicks = 5;
+  const yLines = Array.from({ length: yTicks + 1 }, (_, i) => {
+    const val = Math.round((max / yTicks) * i);
+    const y = pad.top + ch - (val / max) * ch;
+    return `<line x1="${pad.left}" y1="${y}" x2="${pad.left + cw}" y2="${y}" stroke="#e5e7eb" stroke-width="1"/>
+    <text x="${pad.left - 6}" y="${y + 4}" text-anchor="end" font-size="10" fill="#6b7280">${val}</text>`;
+  }).join("\n");
+
+  const bars = data.map((d, i) => {
+    const bh = Math.max(2, (d.value / max) * ch);
+    const x = pad.left + i * gap + (gap - barW) / 2;
+    const y = pad.top + ch - bh;
+    const labelY = pad.top + ch + 16;
+    return `<rect x="${x}" y="${y}" width="${barW}" height="${bh}" fill="${color}" rx="3" opacity="0.85"/>
+    <text x="${x + barW / 2}" y="${y - 5}" text-anchor="middle" font-size="10" font-weight="600" fill="${color}">${d.value}</text>
+    <text x="${x + barW / 2}" y="${labelY}" text-anchor="middle" font-size="9" fill="#374151" transform="rotate(-30,${x + barW / 2},${labelY})">${esc(d.label)}</text>`;
+  }).join("\n");
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+  <rect width="${width}" height="${height}" fill="white" rx="6"/>
+  <text x="${width / 2}" y="28" text-anchor="middle" font-size="13" font-weight="bold" fill="#111827" font-family="Arial,sans-serif">${esc(title)}</text>
+  <line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${pad.top + ch}" stroke="#d1d5db" stroke-width="1"/>
+  <line x1="${pad.left}" y1="${pad.top + ch}" x2="${pad.left + cw}" y2="${pad.top + ch}" stroke="#d1d5db" stroke-width="1"/>
+  ${yLines}
+  ${bars}
+</svg>`;
+}
+
+function generateLineChartSvg(
+  data: { label: string; value: number }[],
+  title: string,
+  color: string,
+  width = 560,
+  height = 280
+): string {
+  if (data.length < 2) return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="${width}" height="${height}" fill="white"/></svg>`;
+  const pad = { top: 44, right: 24, bottom: 44, left: 56 };
+  const cw = width - pad.left - pad.right;
+  const ch = height - pad.top - pad.bottom;
+  const max = Math.max(...data.map(d => d.value), 1);
+
+  const points = data.map((d, i) => ({
+    x: pad.left + (i / (data.length - 1)) * cw,
+    y: pad.top + ch - (d.value / max) * ch,
+    value: d.value,
+    label: d.label,
+  }));
+
+  const polyline = points.map(p => `${p.x},${p.y}`).join(" ");
+  const area = [
+    `${points[0].x},${pad.top + ch}`,
+    ...points.map(p => `${p.x},${p.y}`),
+    `${points[points.length - 1].x},${pad.top + ch}`,
+  ].join(" ");
+
+  const yTicks = 4;
+  const yLines = Array.from({ length: yTicks + 1 }, (_, i) => {
+    const val = Math.round((max / yTicks) * i);
+    const y = pad.top + ch - (val / max) * ch;
+    return `<line x1="${pad.left}" y1="${y}" x2="${pad.left + cw}" y2="${y}" stroke="#e5e7eb" stroke-width="1"/>
+    <text x="${pad.left - 6}" y="${y + 4}" text-anchor="end" font-size="10" fill="#6b7280">${val}</text>`;
+  }).join("\n");
+
+  // Show x-axis labels for first, middle, last
+  const xLabels = [0, Math.floor(data.length / 2), data.length - 1]
+    .filter((v, i, a) => a.indexOf(v) === i)
+    .map(i => `<text x="${points[i].x}" y="${pad.top + ch + 18}" text-anchor="middle" font-size="10" fill="#6b7280">${esc(points[i].label)}</text>`)
+    .join("\n");
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+  <rect width="${width}" height="${height}" fill="white" rx="6"/>
+  <text x="${width / 2}" y="26" text-anchor="middle" font-size="13" font-weight="bold" fill="#111827" font-family="Arial,sans-serif">${esc(title)}</text>
+  <line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${pad.top + ch}" stroke="#d1d5db" stroke-width="1"/>
+  <line x1="${pad.left}" y1="${pad.top + ch}" x2="${pad.left + cw}" y2="${pad.top + ch}" stroke="#d1d5db" stroke-width="1"/>
+  ${yLines}
+  <polygon points="${area}" fill="${color}" opacity="0.08"/>
+  <polyline points="${polyline}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+  ${points.map(p => `<circle cx="${p.x}" cy="${p.y}" r="3" fill="${color}"/>`).join("\n")}
+  ${xLabels}
+</svg>`;
+}
+
+async function svgToPng(svg: string): Promise<Buffer> {
+  const { Resvg } = await import("@resvg/resvg-js");
+  const resvg = new Resvg(svg, { fitTo: { mode: "original" } });
+  return Buffer.from(resvg.render().asPng());
 }
 
 function formatTime(seconds: number): string {

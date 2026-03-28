@@ -29,6 +29,12 @@ async function buildAll() {
     // - use path traversal to read files (e.g. @google-cloud/secret-manager loads sibling .proto files)
     external: [
       "*.node",
+      "@resvg/resvg-js",
+      "@resvg/resvg-js-linux-x64-gnu",
+      "@resvg/resvg-js-linux-x64-musl",
+      "@resvg/resvg-js-darwin-x64",
+      "@resvg/resvg-js-darwin-arm64",
+      "@resvg/resvg-js-win32-x64-msvc",
       "sharp",
       "better-sqlite3",
       "sqlite3",
