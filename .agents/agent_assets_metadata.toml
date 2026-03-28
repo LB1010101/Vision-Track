@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "YIk0Q50srcPKqQGK4n8ny"
+uri = "file://HANDOVER.md"
+type = "text"
+title = "VisionTrack Handover Document"
