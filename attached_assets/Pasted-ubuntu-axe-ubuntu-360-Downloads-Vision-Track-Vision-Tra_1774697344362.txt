@@ -1,0 +1,234 @@
+ubuntu@axe-ubuntu-360:~/Downloads/Vision-Track/Vision-Track$ PORT=8080 DATABASE_URL=postgresql://visiontrack:visiontrack@localhost:5432/visiontrack VISIONTRACK_PYTHON=/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/.venv/bin/python3 pnpm --filter @workspace/api-server run dev
+
+> @workspace/api-server@0.0.0 dev /home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server
+> export NODE_ENV=development && pnpm run build && pnpm run start
+
+
+> @workspace/api-server@0.0.0 build /home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server
+> node ./build.mjs
+
+
+  dist/index.mjs                       4.4mb ⚠️
+  dist/pino-worker.mjs               153.4kb
+  dist/pino-file.mjs                 142.1kb
+  dist/pino-pretty.mjs               114.6kb
+  dist/thread-stream-worker.mjs        7.3kb
+  dist/index.mjs.map                   7.7mb
+  dist/pino-worker.mjs.map           256.9kb
+  dist/pino-file.mjs.map             229.1kb
+  dist/pino-pretty.mjs.map           203.9kb
+  dist/thread-stream-worker.mjs.map   12.0kb
+
+⚡ Done in 148ms
+
+> @workspace/api-server@0.0.0 start /home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server
+> node --enable-source-maps ./dist/index.mjs
+
+[13:23:14.548] INFO (92757): Server listening
+    port: 8080
+[13:23:22.437] INFO (92757): request completed
+    req: {
+      "id": 1,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 20
+[13:23:26.938] INFO (92757): Job created
+    req: {
+      "id": 2,
+      "method": "POST",
+      "url": "/api/upload"
+    }
+    jobId: 16
+    filename: "1774697006888-14pkw6v3hxth.mp4"
+[13:23:26.938] INFO (92757): request completed
+    req: {
+      "id": 2,
+      "method": "POST",
+      "url": "/api/upload"
+    }
+    res: {
+      "statusCode": 201
+    }
+    responseTime: 53
+[13:23:26.948] INFO (92757): request completed
+    req: {
+      "id": 3,
+      "method": "POST",
+      "url": "/api/process/16"
+    }
+    res: {
+      "statusCode": 200
+    }
+    responseTime: 3
+[13:23:26.949] INFO (92757): Starting detection pipeline
+    videoPath: "/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/uploads/1774697006888-14pkw6v3hxth.mp4"
+    reportPath: "/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/reports/report-16.xlsx"
+[13:23:26.949] INFO (92757): Spawning detection subprocess
+    pythonBin: "/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/.venv/bin/python3"
+    args: [
+      "/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/detect.py",
+      "/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/uploads/1774697006888-14pkw6v3hxth.mp4",
+      "yolov8n.pt"
+    ]
+    modelPath: "yolov8n.pt"
+[13:23:26.958] INFO (92757): request completed
+    req: {
+      "id": 4,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 200
+    }
+    responseTime: 2
+[13:23:26.965] INFO (92757): Processing: 1774697006888-14pkw6v3hxth.mp4
+    script: "detect.py"
+[13:23:26.965] INFO (92757): Annotated video output path: '/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/annotated/annotated-16.mp4' (empty=disabled)
+    script: "detect.py"
+[13:23:27.013] INFO (92757): Video: 1920x1080 @ 60.0fps, 60.0s
+    script: "detect.py"
+[13:23:28.377] INFO (92757): Using Ultralytics YOLO — model: yolov8n.pt
+    script: "detect.py"
+[13:23:28.412] INFO (92757): Opening video writer at: /home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/annotated/annotated-16.mp4.raw.mp4
+    script: "detect.py"
+[13:23:28.518] INFO (92757): Video writer opened OK
+    script: "detect.py"
+[13:23:29.481] INFO (92757): request completed
+    req: {
+      "id": 5,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:23:31.993] INFO (92757): request completed
+    req: {
+      "id": 6,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:24:14.942] INFO (92757): request completed
+    req: {
+      "id": 7,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 9
+[13:24:36.154] INFO (92757): request completed
+    req: {
+      "id": 8,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 5
+[13:24:38.786] INFO (92757): request completed
+    req: {
+      "id": 9,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 3
+[13:25:42.673] INFO (92757): Re-encoding annotated video to H.264 for browser playback...
+    script: "detect.py"
+[13:25:43.861] INFO (92757): request completed
+    req: {
+      "id": 10,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 9
+[13:25:46.459] INFO (92757): request completed
+    req: {
+      "id": 11,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 13
+[13:25:49.004] INFO (92757): request completed
+    req: {
+      "id": 12,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 3
+[13:25:51.521] INFO (92757): request completed
+    req: {
+      "id": 13,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 3
+[13:25:54.036] INFO (92757): request completed
+    req: {
+      "id": 14,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:26:04.383] INFO (92757): Annotated video saved: annotated-16.mp4
+    script: "detect.py"
+[13:26:04.793] WARN (92757): detect.py stderr
+    stderr: "[h264_v4l2m2m @ 0x5af20a52c7c0] Could not find a valid device\n[h264_v4l2m2m @ 0x5af20a52c7c0] can't configure encoder\n[ERROR:0@1.446] global cap_ffmpeg_impl.hpp:3514 open Could not open codec h264_v4l2m2m, error: Unspecified error (-22)\n[ERROR:0@1.446] global cap_ffmpeg_impl.hpp:3531 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter\nOpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'\nOpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'\n[h264_v4l2m2m @ 0x5af20a4d7e40] Could not find a valid device\n[h264_v4l2m2m @ 0x5af20a4d7e40] can't configure encoder\n[ERROR:0@1.446] global cap_ffmpeg_impl.hpp:3514 open Could not open codec h264_v4l2m2m, error: Unspecified error (-22)\n[ERROR:0@1.446] global cap_ffmpeg_impl.hpp:3531 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter\n"
+[13:26:04.793] INFO (92757): Detection complete, generating report
+    detections: 10015
+    tracks: 72
+[13:26:05.039] INFO (92757): Excel report written
+    outputPath: "/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/reports/report-16.xlsx"
+[13:26:05.056] INFO (92757): Processing complete
+    jobId: 16
+[13:27:21.842] INFO (92757): request completed
+    req: {
+      "id": 15,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 200
+    }
+    responseTime: 5
+[13:27:49.816] INFO (92757): request completed
+    req: {
+      "id": 16,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 5
+
+

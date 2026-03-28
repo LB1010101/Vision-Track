@@ -288,10 +288,9 @@ export async function runDetectionPipeline(
 
   await generateExcelReport(videoPath, fileSizeBytes, summary, detections, reportPath);
 
-  // Validate the annotated video path: it must exist on disk to be stored in the DB.
-  const resolvedAnnotatedPath = summary.annotated_video_path && fs.existsSync(summary.annotated_video_path)
-    ? summary.annotated_video_path
-    : null;
+  // Trust detect.py's summary — if it says the video was saved, accept the path.
+  // Python already verifies the file exists before emitting the summary.
+  const resolvedAnnotatedPath = summary.annotated_video_path || null;
 
   return {
     fileSizeBytes,
