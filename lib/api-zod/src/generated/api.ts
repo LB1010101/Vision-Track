@@ -30,6 +30,7 @@ export const ListJobsResponseItem = zod.object({
   totalTracks: zod.number().nullable(),
   errorMessage: zod.string().nullable(),
   reportPath: zod.string().nullable(),
+  annotatedVideoPath: zod.string().nullable(),
   createdAt: zod.date(),
   updatedAt: zod.date(),
 });
@@ -62,6 +63,7 @@ export const ProcessJobResponse = zod.object({
   totalTracks: zod.number().nullable(),
   errorMessage: zod.string().nullable(),
   reportPath: zod.string().nullable(),
+  annotatedVideoPath: zod.string().nullable(),
   createdAt: zod.date(),
   updatedAt: zod.date(),
 });
@@ -85,6 +87,7 @@ export const GetJobStatusResponse = zod.object({
   totalTracks: zod.number().nullable(),
   errorMessage: zod.string().nullable(),
   reportPath: zod.string().nullable(),
+  annotatedVideoPath: zod.string().nullable(),
   createdAt: zod.date(),
   updatedAt: zod.date(),
 });

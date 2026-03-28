@@ -1,4 +1,4 @@
-import { Download, Trash2, FileVideo, AlertCircle } from "lucide-react";
+import { Download, Trash2, FileVideo, AlertCircle, Play } from "lucide-react";
 import { format } from "date-fns";
 import { formatBytes, formatDuration } from "@/lib/utils";
 import { StatusBadge } from "./StatusBadge";
@@ -9,11 +9,12 @@ interface JobsTableProps {
   isLoading: boolean;
   onDelete: (id: number) => void;
   onDownload: (id: number) => void;
+  onWatchVideo: (job: Job) => void;
   isDeleting: boolean;
 }
 
-export function JobsTable({ jobs, isLoading, onDelete, onDownload, isDeleting }: JobsTableProps) {
-  
+export function JobsTable({ jobs, isLoading, onDelete, onDownload, onWatchVideo, isDeleting }: JobsTableProps) {
+
   if (isLoading) {
     return (
       <div className="glass-panel rounded-2xl p-12 flex flex-col items-center justify-center text-muted-foreground">
@@ -67,7 +68,7 @@ export function JobsTable({ jobs, isLoading, onDelete, onDownload, isDeleting }:
                     </div>
                   </div>
                 </td>
-                
+
                 <td className="px-6 py-4">
                   <StatusBadge status={job.status} />
                   {job.errorMessage && (
@@ -77,7 +78,7 @@ export function JobsTable({ jobs, isLoading, onDelete, onDownload, isDeleting }:
                     </div>
                   )}
                 </td>
-                
+
                 <td className="px-6 py-4 font-mono text-xs">
                   <div className="flex flex-col gap-1 text-muted-foreground">
                     <div><span className="text-white/40 mr-2">DUR:</span> <span className="text-white">{job.durationSeconds ? formatDuration(job.durationSeconds) : '--'}</span></div>
@@ -87,16 +88,25 @@ export function JobsTable({ jobs, isLoading, onDelete, onDownload, isDeleting }:
                 <td className="px-6 py-4 font-mono text-xs">
                   <div className="flex flex-col gap-1 text-muted-foreground">
                     <div><span className="text-white/40 mr-2">DET:</span> <span className="text-primary">{job.totalDetections ?? '--'}</span></div>
-                    <div><span className="text-white/40 mr-2">TRK:</span> <span className="text-white">{job.totalTracks ?? '--'}</span></div>
+                    <div><span className="text-white/40 mr-2">OBJ:</span> <span className="text-white">{job.totalTracks ?? '--'}</span></div>
                   </div>
                 </td>
-                
+
                 <td className="px-6 py-4 font-mono text-xs text-muted-foreground">
                   {format(new Date(job.createdAt), 'MMM dd, HH:mm:ss')}
                 </td>
-                
+
                 <td className="px-6 py-4 text-right">
                   <div className="flex items-center justify-end gap-2">
+                    {job.status === 'complete' && job.annotatedVideoPath && (
+                      <button
+                        onClick={() => onWatchVideo(job)}
+                        className="p-2 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white border border-blue-500/20 hover:border-blue-500 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                        title="Watch Annotated Video"
+                      >
+                        <Play className="w-4 h-4" />
+                      </button>
+                    )}
                     {job.status === 'complete' && (
                       <button
                         onClick={() => onDownload(job.id)}

@@ -210,6 +210,8 @@ components:
           type: ["string", "null"]
         reportPath:
           type: ["string", "null"]
+        annotatedVideoPath:
+          type: ["string", "null"]
         createdAt:
           type: string
           format: date-time
@@ -227,6 +229,7 @@ components:
         - totalTracks
         - errorMessage
         - reportPath
+        - annotatedVideoPath
         - createdAt
         - updatedAt
 

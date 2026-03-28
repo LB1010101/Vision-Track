@@ -17,9 +17,11 @@ import { logger } from "../lib/logger";
 
 const UPLOADS_DIR = path.resolve(process.cwd(), "uploads");
 const REPORTS_DIR = path.resolve(process.cwd(), "reports");
+const ANNOTATED_DIR = path.resolve(process.cwd(), "annotated");
 
-if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-if (!fs.existsSync(REPORTS_DIR)) fs.mkdirSync(REPORTS_DIR, { recursive: true });
+for (const dir of [UPLOADS_DIR, REPORTS_DIR, ANNOTATED_DIR]) {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+}
 
 const ALLOWED_EXTENSIONS = new Set([".mp4", ".avi", ".mov", ".mkv", ".webm"]);
 const MAX_FILE_SIZE_BYTES = 2048 * 1024 * 1024;
@@ -101,10 +103,11 @@ router.post("/process/:jobId", async (req, res): Promise<void> => {
 
   const videoPath = path.join(UPLOADS_DIR, job.filename);
   const reportPath = path.join(REPORTS_DIR, `report-${job.id}.xlsx`);
+  const annotatedVideoPath = path.join(ANNOTATED_DIR, `annotated-${job.id}.mp4`);
 
   setImmediate(async () => {
     try {
-      const stats = await runDetectionPipeline(videoPath, reportPath);
+      const stats = await runDetectionPipeline(videoPath, reportPath, annotatedVideoPath);
       await db
         .update(jobsTable)
         .set({
@@ -113,6 +116,7 @@ router.post("/process/:jobId", async (req, res): Promise<void> => {
           totalDetections: stats.totalDetections,
           totalTracks: stats.totalTracks,
           reportPath: reportPath,
+          annotatedVideoPath: stats.annotatedVideoPath,
         })
         .where(eq(jobsTable.id, job.id));
       logger.info({ jobId: job.id }, "Processing complete");
@@ -168,6 +172,51 @@ router.get("/download/:jobId", async (req, res): Promise<void> => {
   });
 });
 
+router.get("/video/:jobId", async (req, res): Promise<void> => {
+  const params = GetJobStatusParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const [job] = await db.select().from(jobsTable).where(eq(jobsTable.id, params.data.jobId));
+  if (!job || !job.annotatedVideoPath) {
+    res.status(404).json({ error: "Annotated video not available" });
+    return;
+  }
+
+  if (!fs.existsSync(job.annotatedVideoPath)) {
+    res.status(404).json({ error: "Annotated video file not found on disk" });
+    return;
+  }
+
+  const stat = fs.statSync(job.annotatedVideoPath);
+  const fileSize = stat.size;
+  const range = req.headers.range;
+
+  res.setHeader("Content-Type", "video/mp4");
+  res.setHeader("Accept-Ranges", "bytes");
+  res.setHeader("Content-Disposition", `inline; filename="annotated-${job.originalName}"`);
+
+  if (range) {
+    const parts = range.replace(/bytes=/, "").split("-");
+    const start = parseInt(parts[0], 10);
+    const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+    const chunkSize = end - start + 1;
+
+    res.setHeader("Content-Range", `bytes ${start}-${end}/${fileSize}`);
+    res.setHeader("Content-Length", chunkSize);
+    res.status(206);
+
+    const stream = fs.createReadStream(job.annotatedVideoPath, { start, end });
+    stream.pipe(res);
+  } else {
+    res.setHeader("Content-Length", fileSize);
+    res.status(200);
+    fs.createReadStream(job.annotatedVideoPath).pipe(res);
+  }
+});
+
 router.delete("/jobs/:jobId", async (req, res): Promise<void> => {
   const params = DeleteJobParams.safeParse(req.params);
   if (!params.success) {
@@ -186,12 +235,9 @@ router.delete("/jobs/:jobId", async (req, res): Promise<void> => {
   }
 
   const videoPath = path.join(UPLOADS_DIR, job.filename);
-  if (fs.existsSync(videoPath)) {
-    fs.unlinkSync(videoPath);
-  }
-  if (job.reportPath && fs.existsSync(job.reportPath)) {
-    fs.unlinkSync(job.reportPath);
-  }
+  if (fs.existsSync(videoPath)) fs.unlinkSync(videoPath);
+  if (job.reportPath && fs.existsSync(job.reportPath)) fs.unlinkSync(job.reportPath);
+  if (job.annotatedVideoPath && fs.existsSync(job.annotatedVideoPath)) fs.unlinkSync(job.annotatedVideoPath);
 
   req.log.info({ jobId: job.id }, "Job deleted");
   res.sendStatus(204);

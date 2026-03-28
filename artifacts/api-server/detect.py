@@ -8,17 +8,18 @@ Runs object detection + tracking on a video file using:
 Outputs newline-delimited JSON to stdout:
   - Each detection: {"type":"detection", "frame":N, "timestamp_s":F, "track_id":N, ...}
   - Progress updates: {"type":"progress", "frame":N, "total_frames":N}
-  - Final summary: {"type":"summary", "total_detections":N, "total_tracks":N, "duration_s":F, "fps":F, "width":N, "height":N}
+  - Final summary: {"type":"summary", "total_detections":N, "total_tracks":N, "duration_s":F, "fps":F, "width":N, "height":N, "annotated_video_path":"..."}
   - Errors: {"type":"error", "message":"..."}
 
 Usage:
-  python3 detect.py <video_path> [model_path] [zones_json]
+  python3 detect.py <video_path> [model_path]
 
 Environment variables:
-  VISIONTRACK_MODEL      Path to model file (default: yolov8n.pt)
-  VISIONTRACK_CONFIDENCE Minimum confidence threshold (default: 0.35)
-  VISIONTRACK_DEVICE     Device override: 'cpu', 'cuda', 'axelera' (default: auto-detect)
-  VISIONTRACK_ZONES      JSON array of zone polygons, e.g.: '[{"name":"Zone A","polygon":[[0,0],[960,0],[960,540],[0,540]]}]'
+  VISIONTRACK_MODEL           Path to model file (default: yolov8n.pt)
+  VISIONTRACK_CONFIDENCE      Minimum confidence threshold (default: 0.35)
+  VISIONTRACK_DEVICE          Device override: 'cpu', 'cuda', 'axelera' (default: auto-detect)
+  VISIONTRACK_ZONES           JSON array of zone polygons
+  VISIONTRACK_OUTPUT_VIDEO    Output path for annotated video (optional)
 """
 
 import sys
@@ -122,16 +123,41 @@ def point_in_polygon(x, y, polygon):
         j = i
     return inside
 
-def run_with_axelera(video_path, model_path, confidence, zones, frame_width, frame_height):
+def make_video_writer(output_path, fps, width, height):
+    """Create an OpenCV VideoWriter, trying multiple codecs for compatibility."""
+    import cv2
+    # Try H.264 first (browser-compatible)
+    for fourcc_str in ['avc1', 'H264', 'mp4v', 'XVID']:
+        fourcc = cv2.VideoWriter_fourcc(*fourcc_str)
+        writer = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+        if writer.isOpened():
+            return writer
+    return None
+
+def reencode_with_ffmpeg(input_path, output_path):
+    """Re-encode to H.264 MP4 using FFmpeg for browser compatibility."""
+    import subprocess
+    try:
+        result = subprocess.run(
+            [
+                "ffmpeg", "-y", "-i", input_path,
+                "-vcodec", "libx264", "-preset", "fast",
+                "-crf", "23", "-movflags", "+faststart",
+                "-an", output_path
+            ],
+            capture_output=True, timeout=600
+        )
+        return result.returncode == 0
+    except Exception:
+        return False
+
+def run_with_axelera(video_path, model_path, confidence, zones, frame_width, frame_height, output_video_path):
     """
     Run inference using Axelera Voyager SDK.
-    Returns list of detection dicts.
+    Returns list of detection dicts, or None if SDK not available.
     """
     try:
-        # Try to import Axelera Voyager SDK
-        # The SDK exposes a Pipeline class that wraps compiled .axm models
         import axelera.runtime as axrt
-
         emit({"type": "log", "message": "Axelera Voyager SDK detected — using hardware accelerator"})
 
         pipeline = axrt.Pipeline(model_path)
@@ -143,12 +169,29 @@ def run_with_axelera(video_path, model_path, confidence, zones, frame_width, fra
         detections = []
         frame_idx = 0
 
+        writer = None
+        if output_video_path:
+            writer = make_video_writer(output_video_path, fps, frame_width, frame_height)
+
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 break
 
             results = pipeline.infer(frame)
+
+            # Draw bounding boxes on frame
+            if writer is not None:
+                annotated = frame.copy()
+                for det in results.detections:
+                    if det.confidence < confidence:
+                        continue
+                    x1, y1, x2, y2 = int(det.x1), int(det.y1), int(det.x2), int(det.y2)
+                    label = f"{det.class_name} {det.confidence:.2f}"
+                    cv2.rectangle(annotated, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                    cv2.putText(annotated, label, (x1, y1 - 5),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+                writer.write(annotated)
 
             for det in results.detections:
                 if det.confidence < confidence:
@@ -178,14 +221,18 @@ def run_with_axelera(video_path, model_path, confidence, zones, frame_width, fra
             frame_idx += 1
 
         cap.release()
+        if writer is not None:
+            writer.release()
+
         return detections, fps, total_frames
 
     except ImportError:
         return None  # Signal to fall back to Ultralytics
 
-def run_with_ultralytics(video_path, model_path, confidence, zones, frame_width, frame_height, fps):
+def run_with_ultralytics(video_path, model_path, confidence, zones, frame_width, frame_height, fps, output_video_path):
     """
     Run inference using Ultralytics YOLO with ByteTrack.
+    Optionally writes annotated video to output_video_path.
     Returns list of detection dicts.
     """
     from ultralytics import YOLO
@@ -199,10 +246,15 @@ def run_with_ultralytics(video_path, model_path, confidence, zones, frame_width,
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     cap.release()
 
+    writer = None
+    if output_video_path:
+        writer = make_video_writer(output_video_path, fps, frame_width, frame_height)
+        if writer is None:
+            emit({"type": "log", "message": "Warning: could not open video writer for annotated output"})
+
     detections = []
     frame_idx = 0
 
-    # model.track handles reading the video + tracking via ByteTrack
     results_gen = model.track(
         source=video_path,
         stream=True,
@@ -213,6 +265,11 @@ def run_with_ultralytics(video_path, model_path, confidence, zones, frame_width,
     )
 
     for result in results_gen:
+        # Write annotated frame using YOLO's built-in plot()
+        if writer is not None:
+            annotated_frame = result.plot()
+            writer.write(annotated_frame)
+
         boxes = result.boxes
         if boxes is not None and len(boxes) > 0:
             for box in boxes:
@@ -246,6 +303,9 @@ def run_with_ultralytics(video_path, model_path, confidence, zones, frame_width,
 
         frame_idx += 1
 
+    if writer is not None:
+        writer.release()
+
     return detections
 
 def main():
@@ -265,24 +325,53 @@ def main():
     confidence = float(os.environ.get("VISIONTRACK_CONFIDENCE", "0.35"))
     zones_json = os.environ.get("VISIONTRACK_ZONES", "")
     zones = parse_zones(zones_json)
+    output_video_path = os.environ.get("VISIONTRACK_OUTPUT_VIDEO", "")
 
     emit({"type": "log", "message": f"Processing: {os.path.basename(video_path)}"})
 
-    # Get real video metadata
     frame_width, frame_height, duration_s, fps = get_video_metadata(video_path)
     emit({"type": "log", "message": f"Video: {frame_width}x{frame_height} @ {fps:.1f}fps, {duration_s:.1f}s"})
+
+    # Determine annotated video path
+    raw_annotated_path = ""
+    final_annotated_path = ""
+    if output_video_path:
+        # Write raw annotated video first, then re-encode for browser compatibility
+        raw_annotated_path = output_video_path + ".raw.mp4"
+        final_annotated_path = output_video_path
 
     detections = []
 
     # 1. Try Axelera Voyager SDK
-    result = run_with_axelera(video_path, model_path, confidence, zones, frame_width, frame_height)
+    result = run_with_axelera(
+        video_path, model_path, confidence, zones,
+        frame_width, frame_height,
+        raw_annotated_path if output_video_path else ""
+    )
     if result is not None:
         detections, fps, _ = result
     else:
         # 2. Fall back to Ultralytics YOLO
-        detections = run_with_ultralytics(video_path, model_path, confidence, zones, frame_width, frame_height, fps)
+        detections = run_with_ultralytics(
+            video_path, model_path, confidence, zones,
+            frame_width, frame_height, fps,
+            raw_annotated_path if output_video_path else ""
+        )
 
-    # Compute unique track IDs
+    # Re-encode to H.264 for browser playback
+    resolved_annotated_path = ""
+    if output_video_path and os.path.exists(raw_annotated_path):
+        emit({"type": "log", "message": "Re-encoding annotated video to H.264 for browser playback..."})
+        if reencode_with_ffmpeg(raw_annotated_path, final_annotated_path):
+            os.remove(raw_annotated_path)
+            resolved_annotated_path = final_annotated_path
+            emit({"type": "log", "message": f"Annotated video saved: {os.path.basename(final_annotated_path)}"})
+        else:
+            # FFmpeg failed — use raw file as fallback
+            os.rename(raw_annotated_path, final_annotated_path)
+            resolved_annotated_path = final_annotated_path
+            emit({"type": "log", "message": "FFmpeg re-encode skipped — raw video saved"})
+
     track_ids = set(d["track_id"] for d in detections if d["track_id"] >= 0)
 
     emit({
@@ -293,6 +382,7 @@ def main():
         "fps": round(fps, 3),
         "width": frame_width,
         "height": frame_height,
+        "annotated_video_path": resolved_annotated_path,
     })
 
 if __name__ == "__main__":

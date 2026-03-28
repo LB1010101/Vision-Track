@@ -24,6 +24,8 @@ export interface Job {
   errorMessage: string | null;
   /** @nullable */
   reportPath: string | null;
+  /** @nullable */
+  annotatedVideoPath: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -1,13 +1,17 @@
+import { useState } from "react";
 import { Layout } from "@/components/Layout";
 import { StatsBar } from "@/components/StatsBar";
 import { UploadZone } from "@/components/UploadZone";
 import { JobsTable } from "@/components/JobsTable";
+import { VideoPlayerModal } from "@/components/VideoPlayerModal";
 import { useJobs, useUploadAndProcessVideo, useJobActions } from "@/hooks/use-jobs";
+import type { Job } from "@workspace/api-client-react";
 
 export default function Dashboard() {
   const { data: jobs, isLoading: isJobsLoading } = useJobs();
   const { uploadAndProcess, isUploading, progress } = useUploadAndProcessVideo();
   const { deleteJob, isDeleting, downloadReport } = useJobActions();
+  const [watchingJob, setWatchingJob] = useState<Job | null>(null);
 
   return (
     <Layout>
@@ -19,11 +23,11 @@ export default function Dashboard() {
       </div>
 
       <StatsBar jobs={jobs} />
-      
-      <UploadZone 
-        onUpload={uploadAndProcess} 
-        isUploading={isUploading} 
-        progress={progress} 
+
+      <UploadZone
+        onUpload={uploadAndProcess}
+        isUploading={isUploading}
+        progress={progress}
       />
 
       <div className="mb-4 mt-12 flex items-center justify-between">
@@ -33,13 +37,22 @@ export default function Dashboard() {
         </h2>
       </div>
 
-      <JobsTable 
-        jobs={jobs} 
-        isLoading={isJobsLoading} 
+      <JobsTable
+        jobs={jobs}
+        isLoading={isJobsLoading}
         onDelete={deleteJob}
         onDownload={downloadReport}
+        onWatchVideo={setWatchingJob}
         isDeleting={isDeleting}
       />
+
+      {watchingJob && (
+        <VideoPlayerModal
+          jobId={watchingJob.id}
+          filename={watchingJob.originalName}
+          onClose={() => setWatchingJob(null)}
+        />
+      )}
     </Layout>
   );
 }
