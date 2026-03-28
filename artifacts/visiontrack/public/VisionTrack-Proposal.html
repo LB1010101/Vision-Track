@@ -269,14 +269,14 @@
     /* ── PRICING ─────────────────────────────────────── */
     .pricing-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 24px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 28px;
       margin-bottom: 48px;
     }
     .pricing-card {
       border: 2px solid var(--grey-200);
       border-radius: var(--radius);
-      padding: 36px 28px 32px;
+      padding: 40px 36px 36px;
       position: relative;
     }
     .pricing-card.featured {
@@ -304,17 +304,35 @@
       margin-bottom: 12px;
     }
     .pricing-card .price {
-      font-size: 40px;
+      font-size: 42px;
       font-weight: 800;
       color: var(--navy);
       line-height: 1;
       margin-bottom: 4px;
+    }
+    .pricing-card .price sub {
+      font-size: 20px;
+      font-weight: 700;
+      vertical-align: baseline;
     }
     .pricing-card .price-note {
       font-size: 13px;
       color: var(--grey-400);
       margin-bottom: 28px;
     }
+    .pricing-card .price-breakdown {
+      background: rgba(0,0,0,0.04);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 24px;
+      font-size: 13px;
+      color: var(--grey-600);
+      line-height: 1.7;
+    }
+    .pricing-card.featured .price-breakdown {
+      background: rgba(26,86,219,0.08);
+    }
+    .pricing-card .price-breakdown strong { color: var(--navy); }
     .pricing-card ul {
       list-style: none;
       margin-bottom: 32px;
@@ -336,7 +354,7 @@
     .pricing-card .cta {
       display: block;
       text-align: center;
-      padding: 11px 0;
+      padding: 13px 0;
       border-radius: 7px;
       font-size: 14px;
       font-weight: 600;
@@ -352,6 +370,35 @@
       color: var(--grey-400);
       text-align: center;
       line-height: 1.6;
+    }
+    .credit-example {
+      background: var(--navy);
+      color: white;
+      border-radius: var(--radius);
+      padding: 28px 32px;
+      margin-bottom: 48px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+    }
+    .credit-example-item {
+      text-align: center;
+      padding: 0 20px;
+      border-right: 1px solid rgba(255,255,255,0.12);
+    }
+    .credit-example-item:last-child { border-right: none; }
+    .credit-example-item .val {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--accent);
+      display: block;
+      line-height: 1.1;
+      margin-bottom: 4px;
+    }
+    .credit-example-item p {
+      font-size: 12px;
+      color: rgba(255,255,255,0.55);
+      line-height: 1.4;
     }
 
     /* ── TECH STACK ────────────────────────────────── */
@@ -762,71 +809,80 @@
        PRICING
   ══════════════════════════════════════════════════════ -->
   <div class="page page-break">
-    <div class="section-label">Investment</div>
-    <h2>Pricing & Packages</h2>
+    <div class="section-label">Commercial Options</div>
+    <h2>Pricing & Commercials</h2>
     <p class="lead">
-      All packages include a fully licensed, source-available deployment of VisionTrack.
-      Prices below are indicative — a tailored quote will be provided after a scoping call.
+      Two flexible billing models to suit your operational requirements.
+      All pricing is in South African Rand (ZAR) and excludes VAT.
     </p>
 
     <div class="pricing-grid">
 
+      <!-- OPTION 1: PAY PER JOB -->
       <div class="pricing-card">
-        <h3>Essentials</h3>
-        <div class="price">[£ TBD]</div>
-        <div class="price-note">one-time delivery fee</div>
+        <h3>Option 1 — Pay Per Job</h3>
+        <div class="price"><sub>R</sub>[TBD]</div>
+        <div class="price-note">per analysis job submitted</div>
+        <div class="price-breakdown">
+          Billed per video uploaded and processed.<br>
+          <strong>1 job = 1 video file analysed</strong>, regardless of footage length.<br>
+          Invoiced monthly in arrears.
+        </div>
         <ul>
-          <li>Full VisionTrack platform</li>
-          <li>YOLOv8 object detection</li>
-          <li>ByteTrack multi-object tracking</li>
-          <li>6-sheet Excel analytics reports</li>
-          <li>Annotated video playback</li>
-          <li>Single-server deployment</li>
-          <li>30-day post-delivery support</li>
+          <li>No upfront commitment required</li>
+          <li>Full object detection &amp; tracking per job</li>
+          <li>6-sheet Excel analytics report per job</li>
+          <li>Annotated video output per job</li>
+          <li>Ideal for irregular or ad-hoc usage</li>
+          <li>Monthly invoice with itemised job log</li>
         </ul>
         <a class="cta" href="#">Request Quote</a>
       </div>
 
+      <!-- OPTION 2: PREPAID CREDITS -->
       <div class="pricing-card featured">
-        <div class="badge">RECOMMENDED</div>
-        <h3>Professional</h3>
-        <div class="price">[£ TBD]</div>
-        <div class="price-note">one-time delivery fee</div>
+        <div class="badge">BEST VALUE</div>
+        <h3>Option 2 — Prepaid Hour Credits</h3>
+        <div class="price"><sub>R</sub>22,500</div>
+        <div class="price-note">per credit · 1 credit = 1 hour of footage</div>
+        <div class="price-breakdown">
+          Credits are purchased in <strong>100-hour blocks</strong> (minimum purchase).<br>
+          <strong>Block price: R 2,250,000</strong> per 100-hour pack.<br>
+          Credits never expire and roll over month to month.
+        </div>
         <ul>
-          <li>Everything in Essentials</li>
-          <li>Axelera AI hardware integration</li>
-          <li>Custom detection zone setup</li>
-          <li>Tailored YOLO model selection</li>
-          <li>Confidence threshold tuning</li>
-          <li>On-site installation & testing</li>
-          <li>90-day post-delivery support</li>
-          <li>Staff walkthrough session</li>
+          <li>100-hour minimum purchase per order</li>
+          <li>Credits deducted by footage duration processed</li>
+          <li>Lower effective rate vs. pay-per-job</li>
+          <li>Full analytics report &amp; annotated video per job</li>
+          <li>Real-time credit balance visible on dashboard</li>
+          <li>Top-up at any time in 100-hour increments</li>
+          <li>Unused credits roll over — no expiry</li>
         </ul>
         <a class="cta" href="#">Request Quote</a>
-      </div>
-
-      <div class="pricing-card">
-        <h3>Enterprise</h3>
-        <div class="price">[POA]</div>
-        <div class="price-note">custom engagement</div>
-        <ul>
-          <li>Everything in Professional</li>
-          <li>Custom model fine-tuning</li>
-          <li>Multi-camera / multi-server</li>
-          <li>Bespoke report formats</li>
-          <li>API integration with existing systems</li>
-          <li>SLA-backed support agreement</li>
-          <li>Quarterly platform updates</li>
-          <li>Dedicated account manager</li>
-        </ul>
-        <a class="cta" href="#">Contact Us</a>
       </div>
 
     </div>
 
+    <!-- CREDIT EXAMPLE BREAKDOWN -->
+    <div class="credit-example">
+      <div class="credit-example-item">
+        <span class="val">100 hrs</span>
+        <p>Minimum prepaid<br>credit block</p>
+      </div>
+      <div class="credit-example-item">
+        <span class="val">R 22,500</span>
+        <p>Rate per hour<br>of footage processed</p>
+      </div>
+      <div class="credit-example-item">
+        <span class="val">R 2,250,000</span>
+        <p>Total cost per<br>100-hour block (excl. VAT)</p>
+      </div>
+    </div>
+
     <p class="pricing-disclaimer">
-      All prices are subject to a scoping call and site survey. Hardware procurement (Lenovo P360, Axelera M.2 card) is quoted separately.<br>
-      Annual support and maintenance contracts available on all packages. VAT applicable where relevant.
+      All prices are in South African Rand (ZAR) and exclude VAT at the prevailing rate.<br>
+      Hardware procurement (Lenovo P360, Axelera M.2 card) is quoted separately. Platform deployment fee applies — contact us for a tailored quote.
     </p>
 
     <hr class="divider">
@@ -840,19 +896,19 @@
         <tr>
           <th>Service</th>
           <th>Description</th>
-          <th>Indicative Price</th>
+          <th>Indicative Price (ZAR)</th>
         </tr>
       </thead>
       <tbody>
         <tr>
           <td><strong>Custom Zone Configuration</strong></td>
           <td>Definition and testing of customer-specific detection zones (per camera plan)</td>
-          <td>[£ TBD]</td>
+          <td>[R TBD]</td>
         </tr>
         <tr>
           <td><strong>Model Fine-Tuning</strong></td>
           <td>Re-training YOLOv8 on customer-provided footage for improved accuracy in specific environments</td>
-          <td>[£ TBD]</td>
+          <td>[R TBD]</td>
         </tr>
         <tr>
           <td><strong>Hardware Procurement</strong></td>
@@ -862,12 +918,12 @@
         <tr>
           <td><strong>Annual Support Contract</strong></td>
           <td>Priority bug fixes, platform updates, remote troubleshooting — 9–5 Mon–Fri</td>
-          <td>[£ TBD / year]</td>
+          <td>[R TBD / year]</td>
         </tr>
         <tr>
           <td><strong>Additional Training Session</strong></td>
           <td>Half-day on-site or remote session for new staff members</td>
-          <td>[£ TBD]</td>
+          <td>[R TBD]</td>
         </tr>
       </tbody>
     </table>
