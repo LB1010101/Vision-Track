@@ -20,7 +20,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **API codegen**: Orval (from OpenAPI spec `lib/api-spec/openapi.yaml`)
 - **Build**: esbuild (ESM bundle; native `.node` packages and `@resvg/resvg-js` externalised in `build.mjs`)
 - **Frontend**: React + Vite, TailwindCSS, react-dropzone, framer-motion — light mode theme
-- **Excel generation**: ExcelJS 4.x — 6-sheet workbook with data bar conditional formatting and embedded PNG charts
+- **Excel generation**: ExcelJS 4.x — 6-sheet workbook with embedded PNG charts (no conditional formatting — all `addConditionalFormatting` calls removed due to ExcelJS 4.x bug)
 - **Chart rendering**: `@resvg/resvg-js` (WASM SVG→PNG renderer — no browser/canvas native bindings needed)
 - **File upload**: multer (multipart/form-data, max 2 GB)
 - **Video annotation**: Python `detect.py` via subprocess — YOLO `result.plot()` + FFmpeg H.264 re-encode
@@ -83,13 +83,14 @@ All endpoints are under `/api`:
 1. `POST /upload` saves video to `uploads/`, creates `pending` DB row
 2. `POST /process/:jobId` fires `setImmediate` (non-blocking) and returns immediately
 3. Inside `setImmediate`, `runDetectionPipeline()` in `detection.ts`:
-   - Spawns `detect.py` as a Python subprocess
+   - Spawns `detect.py` as a Python subprocess with `VISIONTRACK_OUTPUT_VIDEO` env var set to the expected annotated video path
    - `detect.py` runs: Axelera Voyager SDK → Ultralytics YOLO + ByteTrack → mock fallback
    - `detect.py` streams NDJSON to stdout (`detection`, `progress`, `log`, `summary`, `error` types)
    - `detect.py` also writes an annotated video to `annotated/` and re-encodes to H.264 via FFmpeg
    - Node collects all detections and the summary message
-   - `generateExcelReport()` produces a 6-sheet `.xlsx` with data bars + embedded SVG→PNG charts
-4. DB row updated: `status=complete`, stats, `report_path`, `annotated_video_path`
+   - `generateExcelReport()` produces a 6-sheet `.xlsx` with embedded SVG→PNG charts
+4. `routes/jobs.ts` checks both `stats.annotatedVideoPath` (from detect.py summary) and the expected path on disk as a fallback, then saves to DB
+5. DB row updated: `status=complete`, stats, `report_path`, `annotated_video_path`
 
 ## Database Schema
 
@@ -103,7 +104,7 @@ Single table `jobs`. Key columns:
 | `total_detections`     | integer  | Frame-level detection events                       |
 | `total_tracks`         | integer  | Unique tracked objects (distinct track IDs)        |
 
-Push schema changes:
+Push schema changes to the P360 database (required after first pull or schema updates):
 ```bash
 DATABASE_URL=postgresql://visiontrack:visiontrack@localhost:5432/visiontrack \
   pnpm --filter @workspace/db run push
@@ -116,6 +117,7 @@ Every package extends `tsconfig.base.json` which sets `composite: true`. The roo
 - **Always typecheck from the root** — run `pnpm run typecheck`
 - **`emitDeclarationOnly`** — only `.d.ts` files are emitted during typecheck
 - **Project references** — when package A depends on package B, A's `tsconfig.json` must list B in its `references` array
+- **Note**: The build uses esbuild (not tsc) and does NOT perform type checking. TypeScript errors will not fail the build — only runtime errors will surface.
 
 ## Codegen
 
@@ -126,12 +128,14 @@ pnpm --filter @workspace/api-spec run codegen
 
 ## Known Gotchas
 
-- **ExcelJS data bars**: Do NOT pass `gradient: true` or `border: false` to `addConditionalFormatting` data bar rules — ExcelJS 4.x does not support these and throws `TypeError: Cannot read properties of undefined (reading 'forEach')` when writing the file.
+- **ExcelJS conditional formatting completely removed**: All `addConditionalFormatting` calls have been removed from `generateExcelReport`. ExcelJS 4.x throws `TypeError: Cannot read properties of undefined (reading 'forEach')` when writing any workbook that contains conditional formatting rules — regardless of the properties passed. Do not re-add data bar rules.
 - **`@resvg/resvg-js` must be externalised in `build.mjs`**: It uses a platform-specific `.node` native binding. The `external` array in `build.mjs` lists all `@resvg/resvg-js*` variants.
 - **Vite proxy**: `vite.config.ts` proxies `/api` → `localhost:8080` only when `REPL_ID` env var is absent (i.e. on P360, not in Replit cloud).
 - **Non-deterministic tracking**: ByteTrack assigns track IDs dynamically; results vary slightly between runs on the same video. This is expected.
 - **Annotated video requires FFmpeg**: `sudo apt install -y ffmpeg` on P360.
+- **DB schema must be pushed on first setup**: Run `pnpm --filter @workspace/db run push` after first clone or after any schema change. Missing the `annotated_video_path` column will silently cause the play button not to appear.
 - **GitHub sync required for P360 updates**: The Replit `gitsafe-backup` remote is not reachable externally. Push to GitHub (`git push github master`) then pull on P360.
+- **esbuild does not type-check**: Mismatched function call signatures will compile silently and only fail at runtime. When adding parameters to exported functions, always update all callers.
 
 ## P360 Startup Commands
 
@@ -144,3 +148,12 @@ Terminal 2 (frontend):
 ```bash
 PORT=3000 BASE_PATH=/ pnpm --filter @workspace/visiontrack run dev
 ```
+
+## GitHub Remote
+
+- **Replit remote name**: `github`
+- **P360 remote name**: `origin`
+- **URL**: `https://github.com/LB1010101/Vision-Track.git` (capital V and T)
+
+Push from Replit Shell: `git push github master`  
+Pull on P360: `git fetch --depth=1 origin master && git reset --hard FETCH_HEAD`

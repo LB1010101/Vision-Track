@@ -35,7 +35,7 @@ VisionTrack is a self-hosted web application for analysing CCTV footage using AI
 2. The server runs object detection and tracking on every frame of the video.
 3. A multi-sheet Excel report is generated with per-minute timeline, zone breakdowns, class statistics, confidence ranges, and embedded bar/line charts.
 4. An annotated copy of the video is created with bounding boxes, class labels, and track IDs drawn on every frame — viewable directly in the browser or downloadable.
-5. User downloads the `.xlsx` report and/or the annotated `.mp4` from the browser.
+5. User downloads the `.xlsx` report and/or watches/downloads the annotated `.mp4` from the browser.
 
 No internet connection is required once set up. Everything runs on the P360.
 
@@ -140,6 +140,12 @@ Single table: **`jobs`**
 | `created_at`          | timestamptz | Job creation time                                              |
 | `updated_at`          | timestamptz | Last update time (auto-updated via `$onUpdate`)                |
 
+**Important:** After first clone or any schema change, run:
+```bash
+DATABASE_URL=postgresql://visiontrack:visiontrack@localhost:5432/visiontrack \
+  pnpm --filter @workspace/db run push
+```
+
 ---
 
 ## 5. API Reference
@@ -171,15 +177,24 @@ Base URL: `http://localhost:8080`
 
 1. Checks if `VISIONTRACK_MOCK=true` is set — if so, runs mock simulation directly.
 2. Checks if `detect.py` exists on disk.
-3. Spawns `detect.py` as a Python subprocess with environment variables for model, confidence, zones, and annotated video output path.
+3. Spawns `detect.py` as a Python subprocess with environment variables for model, confidence, zones, and annotated video output path (`VISIONTRACK_OUTPUT_VIDEO`).
 4. Reads NDJSON from `stdout` line by line:
    - `{"type":"detection", ...}` → collected in memory
    - `{"type":"progress", ...}` → logged for debugging
    - `{"type":"summary", ...}` → stored as final stats (includes annotated video path)
    - `{"type":"log", ...}` → forwarded to server log
    - `{"type":"error", ...}` → logged as error
-5. If Python fails or is not found → falls back to mock pipeline.
+5. If Python fails or is not found → falls back to mock pipeline (no annotated video).
 6. Calls `generateExcelReport()` with all collected detections — produces a 6-sheet workbook with embedded chart images.
+7. Returns `VideoStats` including `annotatedVideoPath` (string or null).
+
+### `routes/jobs.ts` annotated path resolution
+
+After `runDetectionPipeline` returns, `routes/jobs.ts` resolves the final annotated video path using a two-step fallback:
+1. Use `stats.annotatedVideoPath` if it is a non-empty string.
+2. Otherwise check whether the expected file (`annotated/annotated-{jobId}.mp4`) exists on disk and use that path.
+
+This ensures the play button appears even if detection.ts had a path resolution issue.
 
 ### Python side (`artifacts/api-server/detect.py`)
 
@@ -191,7 +206,7 @@ Uses the compiled `.axm` model on the Axelera M.2 AI card. Returns hardware-acce
 **2. Ultralytics YOLO** (fallback)  
 Uses `model.track()` with ByteTrack for multi-object tracking. Automatically downloads `yolov8n.pt` (~6 MB) on first run. Uses `result.plot()` to draw annotations.
 
-**Annotated video:** On every frame, bounding boxes + class labels + track IDs are drawn. The raw output is re-encoded to H.264 via FFmpeg for browser compatibility.
+**Annotated video:** On every frame, bounding boxes + class labels + track IDs are drawn. OpenCV VideoWriter tries multiple codecs (`avc1`, `H264`, `mp4v`, `XVID`) — the first one that opens successfully is used. The raw output is then re-encoded to H.264 via `ffmpeg -vcodec libx264 +faststart` for browser compatibility. On P360 Ubuntu, hardware H.264 encoding via `h264_v4l2m2m` may produce warnings in stderr — this is harmless; `mp4v` is used as the working codec and re-encoding via libx264 still succeeds.
 
 **Video metadata** is read via `ffprobe` first, then OpenCV, then estimated from file size.
 
@@ -214,11 +229,9 @@ Each report is a `.xlsx` workbook with **6 colour-coded tabs** plus embedded cha
 | **Tracks**         | Red    | Per tracked object: class, zone, first seen, last seen, duration, detection count, avg confidence |
 | **Raw Detections** | Teal   | Frame number, timestamp, track ID, class, zone, confidence, bounding box (x,y,w,h) — sampled to 2000 rows max |
 
-**Data bars:** All count columns have in-cell data bar conditional formatting for quick visual comparison.
+**Embedded charts:** Zone Summary, Class Breakdown, and Timeline sheets each contain an embedded PNG chart image (bar or line), generated server-side using SVG + `@resvg/resvg-js` (WASM renderer — no browser required). Charts are wrapped in `try/catch` so a rendering failure never blocks the report.
 
-**Embedded charts:** Zone Summary, Class Breakdown, and Timeline sheets each contain an embedded PNG chart image (bar or line), generated server-side using SVG + `@resvg/resvg-js` (WASM renderer — no browser required).
-
-**Important:** ExcelJS 4.x does not support the `gradient` or `border` properties on data bar rules — these must not be passed to `addConditionalFormatting` or it will throw `undefined.forEach()` at write time.
+**Important — no conditional formatting:** All `addConditionalFormatting` calls have been removed from the codebase. ExcelJS 4.x throws `TypeError: Cannot read properties of undefined (reading 'forEach')` when writing any workbook containing conditional formatting rules. Do not re-add data bar rules.
 
 ---
 
@@ -227,13 +240,22 @@ Each report is a `.xlsx` workbook with **6 colour-coded tabs** plus embedded cha
 When a video is processed successfully:
 
 1. `detect.py` draws bounding boxes, class labels, and track IDs on every frame using YOLO's `result.plot()` (or OpenCV for Axelera).
-2. A raw annotated video is written to `artifacts/api-server/annotated/<jobId>_annotated.raw.mp4`.
-3. FFmpeg re-encodes it to H.264 with `+faststart` for browser streaming.
-4. The final path is stored in `annotated_video_path` in the database.
-5. A **blue Play button** appears in the jobs table for completed jobs that have an annotated video.
-6. Clicking it opens a modal video player. A Download button in the modal saves the file.
+2. A raw annotated video is written to `artifacts/api-server/annotated/annotated-{jobId}.mp4.raw.mp4`.
+3. FFmpeg re-encodes it to H.264 with `+faststart` for browser streaming, saving to `annotated/annotated-{jobId}.mp4`.
+4. The final absolute path is stored in `annotated_video_path` in the database.
+5. A **blue Play button** appears in the jobs table row for completed jobs that have an annotated video.
+6. Clicking it opens a modal video player. A Download button in the modal saves the file locally.
 
 The `/api/video/:jobId` endpoint serves the file with `Content-Range` header support so the browser `<video>` element can seek without downloading the entire file.
+
+**If the Play button is missing after processing completes:**
+1. Check that `artifacts/api-server/annotated/` exists and contains `annotated-{jobId}.mp4`.
+2. If the file exists but the DB column is null, update it manually:
+   ```bash
+   psql postgresql://visiontrack:visiontrack@localhost:5432/visiontrack -c \
+     "UPDATE jobs SET annotated_video_path = '/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/annotated/annotated-{jobId}.mp4' WHERE id = {jobId};"
+   ```
+3. If the column itself is missing: run `pnpm --filter @workspace/db run push` (see Section 4).
 
 ---
 
@@ -303,53 +325,58 @@ http://localhost:3000
 
 ## 11. Syncing Code Updates from Replit
 
-The Replit internal git remote (`gitsafe-backup`) is not reachable from outside. Use GitHub as a relay.
+The Replit internal git remote (`gitsafe-backup`) is not reachable from outside. GitHub is used as a relay.
 
-### One-time setup
+### GitHub repository
 
-1. Create a private repo at github.com (e.g. `vision-track`)
-2. In the Replit Shell, push:
-   ```bash
-   git remote set-url github https://github.com/LB1010101/vision-track.git
-   git push github master
-   ```
-   Use your GitHub Personal Access Token as the password (Settings → Developer settings → Tokens (classic) → `repo` scope).
+**URL:** `https://github.com/LB1010101/Vision-Track.git`  
+**Note:** Both `V` and `T` are capitalised — `Vision-Track`.
 
-3. On P360, point the remote to GitHub:
-   ```bash
-   git remote set-url gitsafe-backup https://github.com/LB1010101/vision-track.git
-   ```
+### Remote names
 
-### Ongoing updates
+| Location | Remote name | URL |
+|----------|-------------|-----|
+| Replit   | `github`    | `https://github.com/LB1010101/Vision-Track.git` |
+| P360     | `origin`    | `https://github.com/LB1010101/Vision-Track.git` |
 
-After changes in Replit (push from Replit Shell):
+### Pushing updates from Replit
+
+In the Replit Shell tab:
 ```bash
 git push github master
 ```
 
-On P360 to pull updates:
+### Pulling updates on P360
+
 ```bash
-git config --global http.postBuffer 524288000
-git fetch --depth=1 gitsafe-backup master
-git reset --hard FETCH_HEAD
+cd ~/Downloads/Vision-Track/Vision-Track
+git fetch --depth=1 origin master && git reset --hard FETCH_HEAD
 pnpm install
 ```
 
 Then restart both terminals.
 
-### If git pull fails (network issue)
+### Setting up P360 remote (first time or if missing)
 
-Download individual files directly:
 ```bash
-BASE="https://raw.githubusercontent.com/LB1010101/vision-track/master"
+cd ~/Downloads/Vision-Track/Vision-Track
+git remote add origin https://github.com/LB1010101/Vision-Track.git
+# or if it already exists with wrong URL:
+git remote set-url origin https://github.com/LB1010101/Vision-Track.git
+```
+
+### If git pull fails (network issue) — curl individual files
+
+```bash
+BASE="https://raw.githubusercontent.com/LB1010101/Vision-Track/master"
 curl -fL "$BASE/artifacts/api-server/src/lib/detection.ts" -o artifacts/api-server/src/lib/detection.ts
+curl -fL "$BASE/artifacts/api-server/src/routes/jobs.ts" -o artifacts/api-server/src/routes/jobs.ts
 curl -fL "$BASE/artifacts/api-server/detect.py" -o artifacts/api-server/detect.py
 curl -fL "$BASE/artifacts/api-server/build.mjs" -o artifacts/api-server/build.mjs
-curl -fL "$BASE/artifacts/api-server/package.json" -o artifacts/api-server/package.json
-curl -fL "$BASE/artifacts/visiontrack/src/index.css" -o artifacts/visiontrack/src/index.css
-# ... add other specific files as needed
 pnpm install
 ```
+
+Then restart Terminal 1.
 
 ---
 
@@ -379,7 +406,7 @@ sudo systemctl enable postgresql
 sudo -u postgres psql -c "CREATE USER visiontrack WITH PASSWORD 'visiontrack';"
 sudo -u postgres psql -c "CREATE DATABASE visiontrack OWNER visiontrack;"
 
-# 6. Create database tables
+# 6. Apply database schema (creates all tables including annotated_video_path column)
 DATABASE_URL=postgresql://visiontrack:visiontrack@localhost:5432/visiontrack \
   pnpm --filter @workspace/db run push
 
@@ -390,6 +417,10 @@ sudo apt install -y ffmpeg
 cd ~/Downloads/Vision-Track/Vision-Track/artifacts/api-server
 python3 -m venv .venv
 .venv/bin/pip install ultralytics opencv-python numpy
+
+# 9. Set up GitHub remote for future updates
+cd ~/Downloads/Vision-Track/Vision-Track
+git remote add origin https://github.com/LB1010101/Vision-Track.git
 ```
 
 ---
@@ -450,15 +481,20 @@ The script (`detect.py`) tries `import axelera.runtime` first. If it succeeds, t
 | `Cannot find native binding` | node_modules built for wrong Node version | `rm -rf node_modules && pnpm install` |
 | `DATABASE_URL must be set` | Env var missing | Add `DATABASE_URL=postgresql://...` to start command |
 | `relation "jobs" does not exist` | Tables not created | Run `pnpm --filter @workspace/db run push` |
+| `column "annotated_video_path" does not exist` | Schema not migrated after feature was added | Run `DATABASE_URL=... pnpm --filter @workspace/db run push` |
 | `connect ECONNREFUSED 127.0.0.1:8080` | API server not running | Start Terminal 1 first, wait for `Server listening` |
 | `Upload failed: Internal Server Error` | API server error | Check Terminal 1 output for actual error |
 | Report contains mock/simulated data | Python not found | Set `VISIONTRACK_PYTHON` to your venv's python3 path |
-| `TypeError: Cannot read properties of undefined (reading 'forEach')` | Unsupported ExcelJS properties | Ensure `gradient`/`border` are NOT passed to `addConditionalFormatting` data bar rules |
+| Excel report write error / `undefined.forEach()` | Conditional formatting rules present | Ensure NO `addConditionalFormatting` calls exist in `detection.ts` — they have been removed and must not be re-added |
 | Port 3000 already in use | Old Vite process still running | Vite picks next port automatically (3001…) — use whatever it prints |
 | `jobs.filter is not a function` | API server not reachable | Check ECONNREFUSED — start API server first |
-| No Play button on completed job | Job processed before annotated video feature was added | Re-process the video to generate annotated output |
+| No Play button on completed job | `annotated_video_path` column missing in DB | Run `pnpm --filter @workspace/db run push` then manually update the row via psql (see Section 8) |
+| No Play button — column exists but is null | Old `routes/jobs.ts` called pipeline without annotated path arg | Do a full `git reset --hard` on P360 to get latest code |
+| Play button appears but video won't load | FFmpeg not installed | `sudo apt install -y ffmpeg` |
+| OpenCV H264/avc1 codec warnings in Terminal 1 | Hardware H.264 encoder not available on P360 | Harmless — `mp4v` is used as fallback; FFmpeg re-encodes to H.264 libx264 successfully |
 | Chart images missing from Excel report | `@resvg/resvg-js` not installed | Run `pnpm install` after pulling latest code |
-| `git pull` drops connection mid-transfer | Network buffer issue | Use `git fetch --depth=1 gitsafe-backup master && git reset --hard FETCH_HEAD` |
+| `fatal: 'origin' does not appear to be a git repository` | P360 git remote not configured | `git remote add origin https://github.com/LB1010101/Vision-Track.git` |
+| `git pull` drops connection mid-transfer | Network buffer issue | Use `git fetch --depth=1 origin master && git reset --hard FETCH_HEAD` |
 
 ---
 
@@ -486,7 +522,7 @@ The script (`detect.py`) tries `import axelera.runtime` first. If it succeeds, t
 {"type":"log",       "message":"Video: 1920x1080 @ 25.0fps, 120.0s"}
 {"type":"detection", "frame":0, "timestamp_s":0.0, "track_id":1, "class":"person", "zone":"Zone A (NW)", "confidence":0.87, "bbox_x":120, "bbox_y":200, "bbox_w":80, "bbox_h":160}
 {"type":"progress",  "frame":100, "total_frames":3000}
-{"type":"summary",   "total_detections":482, "total_tracks":14, "duration_s":120.0, "fps":25.0, "width":1920, "height":1080, "annotated_video_path":"/abs/path/annotated/1_annotated.mp4"}
+{"type":"summary",   "total_detections":482, "total_tracks":14, "duration_s":120.0, "fps":25.0, "width":1920, "height":1080, "annotated_video_path":"/abs/path/annotated/annotated-1.mp4"}
 ```
 
 ---
@@ -496,7 +532,7 @@ The script (`detect.py`) tries `import axelera.runtime` first. If it succeeds, t
 | Function | Purpose |
 |----------|---------|
 | `runDetectionPipeline(videoPath, reportPath, annotatedVideoPath)` | Main entry point — decides Python vs mock, collects results, calls report and chart generators. Returns `VideoStats`. |
-| `runPythonDetect(videoPath, annotatedVideoPath)` | Spawns `detect.py`, parses NDJSON stream, resolves with `{detections, summary}` |
+| `runPythonDetect(videoPath, annotatedVideoPath)` | Spawns `detect.py` with `VISIONTRACK_OUTPUT_VIDEO` env var, parses NDJSON stream, resolves with `{detections, summary}` |
 | `runMockPipeline(videoPath, fileSizeBytes)` | Generates synthetic detections for dev/testing without a GPU or Python |
 | `generateExcelReport(...)` | Builds the 6-sheet workbook using ExcelJS, embeds chart PNG images, writes to disk |
 | `generateBarChartSvg(data, title, color)` | Generates a vertical bar chart as an SVG string (no external rendering required) |
@@ -504,8 +540,6 @@ The script (`detect.py`) tries `import axelera.runtime` first. If it succeeds, t
 | `svgToPng(svg)` | Converts SVG string to PNG Buffer using `@resvg/resvg-js` (WASM — no browser needed) |
 | `getPythonBin()` | Returns `VISIONTRACK_PYTHON` env var or falls back to `python3` |
 | `getModelPath()` | Returns `VISIONTRACK_MODEL` env var or falls back to `yolov8n.pt` |
-| `esc(s)` | XML-escapes a string for safe SVG text content |
-| `formatTime(seconds)` | Formats seconds as `M:SS` for timeline display |
 
 ---
 
@@ -515,11 +549,19 @@ The script (`detect.py`) tries `import axelera.runtime` first. If it succeeds, t
 |-------|-------------------|
 | `GET /jobs` | Queries all rows from `jobs` table ordered by `created_at` desc |
 | `POST /upload` | Multer saves file to `uploads/`, inserts `pending` row in DB, returns job object |
-| `POST /process/:jobId` | Sets status to `processing`, responds `202` immediately, runs pipeline in `setImmediate` (non-blocking) |
+| `POST /process/:jobId` | Sets status to `processing`, responds `200` immediately, runs pipeline in `setImmediate` (non-blocking) |
 | `GET /status/:jobId` | Returns single job row |
 | `GET /download/:jobId` | Streams `.xlsx` file using `res.download()` |
 | `GET /video/:jobId` | Streams annotated `.mp4` with HTTP range request support (enables `<video>` seeking) |
 | `DELETE /jobs/:jobId` | Deletes DB row, removes video file, report, and annotated video from disk |
+
+**Annotated path resolution (after pipeline returns):**
+```typescript
+const savedAnnotatedPath =
+  stats.annotatedVideoPath ||
+  (fs.existsSync(annotatedVideoPath) ? annotatedVideoPath : null);
+```
+This two-step fallback ensures the path is saved even if `detection.ts` returned null.
 
 ---
 
@@ -532,7 +574,7 @@ status: text("status").notNull().default("pending")
 // Values: "pending" | "processing" | "complete" | "failed"
 
 annotatedVideoPath: text("annotated_video_path")
-// Absolute path to H.264 annotated video; null if generation failed or not yet supported
+// Absolute path to H.264 annotated video; null if generation failed or column missing
 ```
 
 `updatedAt` is automatically set to `now()` on every update via `.$onUpdate(() => new Date())`.
