@@ -150,6 +150,11 @@ router.post("/process/:jobId", async (req, res): Promise<void> => {
   setImmediate(async () => {
     try {
       const stats = await runDetectionPipeline(videoPath, reportPath, annotatedVideoPath);
+      // Prefer the path returned by the pipeline; fall back to checking the expected path
+      // on disk in case detection.ts returned null due to a timing/existsSync issue.
+      const savedAnnotatedPath =
+        stats.annotatedVideoPath ||
+        (fs.existsSync(annotatedVideoPath) ? annotatedVideoPath : null);
       await db
         .update(jobsTable)
         .set({
@@ -158,8 +163,7 @@ router.post("/process/:jobId", async (req, res): Promise<void> => {
           totalDetections: stats.totalDetections,
           totalTracks: stats.totalTracks,
           reportPath: reportPath,
-          // null if detect.py didn't produce an annotated video (e.g. mock pipeline)
-          annotatedVideoPath: stats.annotatedVideoPath,
+          annotatedVideoPath: savedAnnotatedPath,
         })
         .where(eq(jobsTable.id, job.id));
       logger.info({ jobId: job.id }, "Processing complete");

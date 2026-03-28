@@ -1,0 +1,754 @@
+buntu@axe-ubuntu-360:~/Downloads/Vision-Track/Vision-Track$ PORT=8080 DATABASE_URL=postgresql://visiontrack:visiontrack@localhost:5432/visiontrack VISIONTRACK_PYTHON=/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/.venv/bin/python3 pnpm --filter @workspace/api-server run dev
+
+> @workspace/api-server@0.0.0 dev /home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server
+> export NODE_ENV=development && pnpm run build && pnpm run start
+
+
+> @workspace/api-server@0.0.0 build /home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server
+> node ./build.mjs
+
+
+  dist/index.mjs                       4.4mb ⚠️
+  dist/pino-worker.mjs               153.4kb
+  dist/pino-file.mjs                 142.1kb
+  dist/pino-pretty.mjs               114.6kb
+  dist/thread-stream-worker.mjs        7.3kb
+  dist/index.mjs.map                   7.7mb
+  dist/pino-worker.mjs.map           256.9kb
+  dist/pino-file.mjs.map             229.1kb
+  dist/pino-pretty.mjs.map           203.9kb
+  dist/thread-stream-worker.mjs.map   12.0kb
+
+⚡ Done in 151ms
+
+> @workspace/api-server@0.0.0 start /home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server
+> node --enable-source-maps ./dist/index.mjs
+
+[13:31:55.497] INFO (93665): Server listening
+    port: 8080
+[13:32:01.448] INFO (93665): request completed
+    req: {
+      "id": 1,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 20
+[13:32:05.670] INFO (93665): Job created
+    req: {
+      "id": 2,
+      "method": "POST",
+      "url": "/api/upload"
+    }
+    jobId: 17
+    filename: "1774697525627-fg9q5cjt2w.mp4"
+[13:32:05.670] INFO (93665): request completed
+    req: {
+      "id": 2,
+      "method": "POST",
+      "url": "/api/upload"
+    }
+    res: {
+      "statusCode": 201
+    }
+    responseTime: 46
+[13:32:05.680] INFO (93665): request completed
+    req: {
+      "id": 3,
+      "method": "POST",
+      "url": "/api/process/17"
+    }
+    res: {
+      "statusCode": 200
+    }
+    responseTime: 3
+[13:32:05.681] INFO (93665): Starting detection pipeline
+    videoPath: "/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/uploads/1774697525627-fg9q5cjt2w.mp4"
+    reportPath: "/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/reports/report-17.xlsx"
+[13:32:05.682] INFO (93665): Spawning detection subprocess
+    pythonBin: "/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/.venv/bin/python3"
+    args: [
+      "/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/detect.py",
+      "/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/uploads/1774697525627-fg9q5cjt2w.mp4",
+      "yolov8n.pt"
+    ]
+    modelPath: "yolov8n.pt"
+[13:32:05.698] INFO (93665): request completed
+    req: {
+      "id": 4,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 200
+    }
+    responseTime: 2
+[13:32:05.700] INFO (93665): Processing: 1774697525627-fg9q5cjt2w.mp4
+    script: "detect.py"
+[13:32:05.700] INFO (93665): Annotated video output path: '/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/annotated/annotated-17.mp4' (empty=disabled)
+    script: "detect.py"
+[13:32:05.746] INFO (93665): Video: 1920x1080 @ 60.0fps, 60.0s
+    script: "detect.py"
+[13:32:07.120] INFO (93665): Using Ultralytics YOLO — model: yolov8n.pt
+    script: "detect.py"
+[13:32:07.154] INFO (93665): Opening video writer at: /home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/annotated/annotated-17.mp4.raw.mp4
+    script: "detect.py"
+[13:32:07.260] INFO (93665): Video writer opened OK
+    script: "detect.py"
+[13:32:08.216] INFO (93665): request completed
+    req: {
+      "id": 5,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:32:10.732] INFO (93665): request completed
+    req: {
+      "id": 6,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 3
+[13:32:13.360] INFO (93665): request completed
+    req: {
+      "id": 7,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:32:15.874] INFO (93665): request completed
+    req: {
+      "id": 8,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 5
+[13:32:18.392] INFO (93665): request completed
+    req: {
+      "id": 9,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:32:20.901] INFO (93665): request completed
+    req: {
+      "id": 10,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:32:23.427] INFO (93665): request completed
+    req: {
+      "id": 11,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:32:25.934] INFO (93665): request completed
+    req: {
+      "id": 12,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:32:28.445] INFO (93665): request completed
+    req: {
+      "id": 13,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:32:30.954] INFO (93665): request completed
+    req: {
+      "id": 14,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:32:33.464] INFO (93665): request completed
+    req: {
+      "id": 15,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:32:35.979] INFO (93665): request completed
+    req: {
+      "id": 16,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 6
+[13:32:38.487] INFO (93665): request completed
+    req: {
+      "id": 17,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:32:40.995] INFO (93665): request completed
+    req: {
+      "id": 18,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:32:43.502] INFO (93665): request completed
+    req: {
+      "id": 19,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:32:46.013] INFO (93665): request completed
+    req: {
+      "id": 20,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:32:48.521] INFO (93665): request completed
+    req: {
+      "id": 21,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:32:51.031] INFO (93665): request completed
+    req: {
+      "id": 22,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 4
+[13:32:53.576] INFO (93665): request completed
+    req: {
+      "id": 23,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 4
+[13:32:56.090] INFO (93665): request completed
+    req: {
+      "id": 24,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:32:58.597] INFO (93665): request completed
+    req: {
+      "id": 25,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:33:01.104] INFO (93665): request completed
+    req: {
+      "id": 26,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:33:03.624] INFO (93665): request completed
+    req: {
+      "id": 27,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:33:06.133] INFO (93665): request completed
+    req: {
+      "id": 28,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:33:08.641] INFO (93665): request completed
+    req: {
+      "id": 29,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:33:11.150] INFO (93665): request completed
+    req: {
+      "id": 30,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:33:13.745] INFO (93665): request completed
+    req: {
+      "id": 31,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:33:16.258] INFO (93665): request completed
+    req: {
+      "id": 32,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:33:18.768] INFO (93665): request completed
+    req: {
+      "id": 33,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:33:21.278] INFO (93665): request completed
+    req: {
+      "id": 34,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 3
+[13:33:23.809] INFO (93665): request completed
+    req: {
+      "id": 35,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:33:26.316] INFO (93665): request completed
+    req: {
+      "id": 36,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:33:28.823] INFO (93665): request completed
+    req: {
+      "id": 37,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:33:31.331] INFO (93665): request completed
+    req: {
+      "id": 38,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:33:33.844] INFO (93665): request completed
+    req: {
+      "id": 39,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:33:36.352] INFO (93665): request completed
+    req: {
+      "id": 40,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:33:38.860] INFO (93665): request completed
+    req: {
+      "id": 41,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:33:41.369] INFO (93665): request completed
+    req: {
+      "id": 42,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:33:43.906] INFO (93665): request completed
+    req: {
+      "id": 43,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:33:46.412] INFO (93665): request completed
+    req: {
+      "id": 44,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:33:48.925] INFO (93665): request completed
+    req: {
+      "id": 45,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:33:51.431] INFO (93665): request completed
+    req: {
+      "id": 46,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:33:53.957] INFO (93665): request completed
+    req: {
+      "id": 47,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:33:56.466] INFO (93665): request completed
+    req: {
+      "id": 48,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:33:58.975] INFO (93665): request completed
+    req: {
+      "id": 49,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:34:01.481] INFO (93665): request completed
+    req: {
+      "id": 50,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:34:04.026] INFO (93665): request completed
+    req: {
+      "id": 51,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 3
+[13:34:06.534] INFO (93665): request completed
+    req: {
+      "id": 52,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:34:09.047] INFO (93665): request completed
+    req: {
+      "id": 53,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:34:11.553] INFO (93665): request completed
+    req: {
+      "id": 54,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:34:14.074] INFO (93665): request completed
+    req: {
+      "id": 55,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:34:16.583] INFO (93665): request completed
+    req: {
+      "id": 56,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:34:19.091] INFO (93665): request completed
+    req: {
+      "id": 57,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:34:21.602] INFO (93665): request completed
+    req: {
+      "id": 58,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:34:23.212] INFO (93665): Re-encoding annotated video to H.264 for browser playback...
+    script: "detect.py"
+[13:34:24.112] INFO (93665): request completed
+    req: {
+      "id": 59,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:34:26.623] INFO (93665): request completed
+    req: {
+      "id": 60,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 3
+[13:34:29.136] INFO (93665): request completed
+    req: {
+      "id": 61,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 3
+[13:34:31.644] INFO (93665): request completed
+    req: {
+      "id": 62,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:34:34.159] INFO (93665): request completed
+    req: {
+      "id": 63,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:34:36.674] INFO (93665): request completed
+    req: {
+      "id": 64,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 4
+[13:34:39.182] INFO (93665): request completed
+    req: {
+      "id": 65,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:34:41.691] INFO (93665): request completed
+    req: {
+      "id": 66,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:34:44.230] INFO (93665): request completed
+    req: {
+      "id": 67,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:34:44.452] INFO (93665): Annotated video saved: annotated-17.mp4
+    script: "detect.py"
+[13:34:44.884] WARN (93665): detect.py stderr
+    stderr: "[h264_v4l2m2m @ 0x5e873f759a00] Could not find a valid device\n[h264_v4l2m2m @ 0x5e873f759a00] can't configure encoder\n[ERROR:0@1.452] global cap_ffmpeg_impl.hpp:3514 open Could not open codec h264_v4l2m2m, error: Unspecified error (-22)\n[ERROR:0@1.452] global cap_ffmpeg_impl.hpp:3531 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter\nOpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'\nOpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'\n[h264_v4l2m2m @ 0x5e873f766b80] Could not find a valid device\n[h264_v4l2m2m @ 0x5e873f766b80] can't configure encoder\n[ERROR:0@1.452] global cap_ffmpeg_impl.hpp:3514 open Could not open codec h264_v4l2m2m, error: Unspecified error (-22)\n[ERROR:0@1.452] global cap_ffmpeg_impl.hpp:3531 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter\n"
+[13:34:44.884] INFO (93665): Detection complete, generating report
+    detections: 10015
+    tracks: 72
+[13:34:45.144] INFO (93665): Excel report written
+    outputPath: "/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/reports/report-17.xlsx"
+[13:34:45.156] INFO (93665): Processing complete
+    jobId: 17
+[13:34:46.740] INFO (93665): request completed
+    req: {
+      "id": 68,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 200
+    }
+    responseTime: 2
+
+
