@@ -322,7 +322,7 @@ def main():
         sys.argv[2] if len(sys.argv) > 2
         else os.environ.get("VISIONTRACK_MODEL", "yolov8n.pt")
     )
-    confidence = float(os.environ.get("VISIONTRACK_CONFIDENCE", "0.35"))
+    confidence = float(os.environ.get("VISIONTRACK_CONFIDENCE", "0.7"))
     zones_json = os.environ.get("VISIONTRACK_ZONES", "")
     zones = parse_zones(zones_json)
     output_video_path = os.environ.get("VISIONTRACK_OUTPUT_VIDEO", "")

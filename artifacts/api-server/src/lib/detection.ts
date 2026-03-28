@@ -58,7 +58,7 @@ async function runPythonDetect(
         Object.entries(process.env).filter(([, v]) => v !== undefined)
       ) as Record<string, string>,
       VISIONTRACK_MODEL: modelPath,
-      VISIONTRACK_CONFIDENCE: process.env["VISIONTRACK_CONFIDENCE"] ?? "0.35",
+      VISIONTRACK_CONFIDENCE: process.env["VISIONTRACK_CONFIDENCE"] ?? "0.7",
       VISIONTRACK_OUTPUT_VIDEO: annotatedVideoPath,
       ...(process.env["VISIONTRACK_ZONES"] ? { VISIONTRACK_ZONES: process.env["VISIONTRACK_ZONES"] } : {}),
     };
