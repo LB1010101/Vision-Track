@@ -423,39 +423,6 @@ async function generateExcelReport(
     zoneRowNum++;
   }
 
-  // In-cell data bars for visual comparison.
-  // NOTE: Only pass properties ExcelJS 4.x supports (minLength, maxLength, cfvo, color, showValue).
-  //       `gradient` and `border` are NOT supported and will crash the write with undefined.forEach().
-  if (sortedZones.length > 0) {
-    zoneSheet.addConditionalFormatting({
-      ref: `B2:B${zoneRowNum - 1}`,
-      rules: [{
-        type: "dataBar",
-        priority: 1,
-        dataBar: {
-          minLength: 0,
-          maxLength: 100,
-          cfvo: [{ type: "min" }, { type: "max" }],
-          color: { argb: "FF1E40AF" },
-          showValue: true,
-        } as ExcelJS.DataBarRuleType["dataBar"],
-      }],
-    });
-    zoneSheet.addConditionalFormatting({
-      ref: `C2:C${zoneRowNum - 1}`,
-      rules: [{
-        type: "dataBar",
-        priority: 1,
-        dataBar: {
-          minLength: 0,
-          maxLength: 100,
-          cfvo: [{ type: "min" }, { type: "max" }],
-          color: { argb: "FF059669" },
-          showValue: true,
-        } as ExcelJS.DataBarRuleType["dataBar"],
-      }],
-    });
-  }
 
   // ── Sheet 3: Class Breakdown ───────────────────────────────────────────────
   const classSheet = workbook.addWorksheet("Class Breakdown");
@@ -501,36 +468,6 @@ async function generateExcelReport(
     classRowNum++;
   }
 
-  if (sortedClasses.length > 0) {
-    classSheet.addConditionalFormatting({
-      ref: `B2:B${classRowNum - 1}`,
-      rules: [{
-        type: "dataBar",
-        priority: 1,
-        dataBar: {
-          minLength: 0,
-          maxLength: 100,
-          cfvo: [{ type: "min" }, { type: "max" }],
-          color: { argb: "FFD97706" },
-          showValue: true,
-        } as ExcelJS.DataBarRuleType["dataBar"],
-      }],
-    });
-    classSheet.addConditionalFormatting({
-      ref: `C2:C${classRowNum - 1}`,
-      rules: [{
-        type: "dataBar",
-        priority: 1,
-        dataBar: {
-          minLength: 0,
-          maxLength: 100,
-          cfvo: [{ type: "min" }, { type: "max" }],
-          color: { argb: "FF7C3AED" },
-          showValue: true,
-        } as ExcelJS.DataBarRuleType["dataBar"],
-      }],
-    });
-  }
 
   // ── Sheet 4: Timeline (per-minute activity) ────────────────────────────────
   const timelineSheet = workbook.addWorksheet("Timeline");
@@ -583,34 +520,6 @@ async function generateExcelReport(
   }
 
   if (maxMinute > 0) {
-    timelineSheet.addConditionalFormatting({
-      ref: `C2:C${timelineRowNum - 1}`,
-      rules: [{
-        type: "dataBar",
-        priority: 1,
-        dataBar: {
-          minLength: 0,
-          maxLength: 100,
-          cfvo: [{ type: "min" }, { type: "max" }],
-          color: { argb: "FF1E40AF" },
-          showValue: true,
-        } as ExcelJS.DataBarRuleType["dataBar"],
-      }],
-    });
-    timelineSheet.addConditionalFormatting({
-      ref: `D2:D${timelineRowNum - 1}`,
-      rules: [{
-        type: "dataBar",
-        priority: 1,
-        dataBar: {
-          minLength: 0,
-          maxLength: 100,
-          cfvo: [{ type: "min" }, { type: "max" }],
-          color: { argb: "FF059669" },
-          showValue: true,
-        } as ExcelJS.DataBarRuleType["dataBar"],
-      }],
-    });
 
     // Highlight the busiest minute in amber so it stands out.
     const peakRow = Object.entries(minuteData)
@@ -676,23 +585,6 @@ async function generateExcelReport(
     trackRowNum++;
   }
 
-  // Data bar on Duration column (red) to surface longest-visible objects quickly.
-  if (trackCount > 0) {
-    tracksSheet.addConditionalFormatting({
-      ref: `F2:F${trackRowNum - 1}`,
-      rules: [{
-        type: "dataBar",
-        priority: 1,
-        dataBar: {
-          minLength: 0,
-          maxLength: 100,
-          cfvo: [{ type: "min" }, { type: "max" }],
-          color: { argb: "FFDC2626" },
-          showValue: true,
-        } as ExcelJS.DataBarRuleType["dataBar"],
-      }],
-    });
-  }
 
   // ── Sheet 6: Raw Detections ────────────────────────────────────────────────
   const rawSheet = workbook.addWorksheet("Raw Detections");
