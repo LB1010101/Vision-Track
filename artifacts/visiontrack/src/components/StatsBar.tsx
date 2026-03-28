@@ -17,9 +17,9 @@ export function StatsBar({ jobs = [] }: StatsBarProps) {
       label: "Total Jobs",
       value: total,
       icon: Database,
-      color: "text-blue-400",
-      bg: "bg-blue-400/10",
-      border: "border-blue-400/20"
+      color: "text-blue-600",
+      bg: "bg-blue-50",
+      border: "border-blue-200"
     },
     {
       label: "Processing",
@@ -51,16 +51,15 @@ export function StatsBar({ jobs = [] }: StatsBarProps) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
       {stats.map((stat, i) => (
-        <div 
-          key={i} 
-          className="glass-panel rounded-2xl p-5 relative overflow-hidden group hover:bg-white/[0.02] transition-colors"
+        <div
+          key={i}
+          className="glass-panel rounded-2xl p-5 relative overflow-hidden group hover:shadow-md transition-shadow"
         >
-          {/* Subtle gradient glow on hover */}
           <div className={cn(
-            "absolute -inset-px opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl blur-md -z-10",
+            "absolute -inset-px opacity-0 group-hover:opacity-60 transition-opacity duration-500 rounded-2xl blur-md -z-10",
             stat.bg
           )} />
-          
+
           <div className="flex justify-between items-start mb-4 relative z-10">
             <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{stat.label}</p>
             <div className={cn("p-2 rounded-xl border", stat.bg, stat.color, stat.border)}>
@@ -68,7 +67,7 @@ export function StatsBar({ jobs = [] }: StatsBarProps) {
             </div>
           </div>
           <div className="flex items-baseline gap-2 relative z-10">
-            <h3 className="text-4xl font-display font-bold text-white tracking-tight">{stat.value}</h3>
+            <h3 className="text-4xl font-display font-bold text-foreground tracking-tight">{stat.value}</h3>
           </div>
         </div>
       ))}

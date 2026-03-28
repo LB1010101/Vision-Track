@@ -26,21 +26,21 @@ export function JobsTable({ jobs, isLoading, onDelete, onDownload, onWatchVideo,
 
   if (!jobs || jobs.length === 0) {
     return (
-      <div className="glass-panel rounded-2xl border-dashed border-white/10 p-16 flex flex-col items-center justify-center text-muted-foreground text-center">
-        <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
-          <FileVideo className="w-8 h-8 opacity-50" />
+      <div className="glass-panel rounded-2xl border-dashed border-border p-16 flex flex-col items-center justify-center text-muted-foreground text-center">
+        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+          <FileVideo className="w-8 h-8 text-muted-foreground/50" />
         </div>
-        <h3 className="text-xl font-display text-white mb-2">No Analysis Logs Found</h3>
+        <h3 className="text-xl font-display text-foreground mb-2">No Analysis Logs Found</h3>
         <p className="max-w-sm text-sm">Upload video footage above to initialize the detection pipeline and generate reports.</p>
       </div>
     );
   }
 
   return (
-    <div className="glass-panel rounded-2xl overflow-hidden border border-white/5">
+    <div className="glass-panel rounded-2xl overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm text-left">
-          <thead className="text-xs uppercase bg-white/[0.02] border-b border-white/10 text-muted-foreground font-mono tracking-wider">
+          <thead className="text-xs uppercase bg-muted/60 border-b border-border text-muted-foreground font-mono tracking-wider">
             <tr>
               <th className="px-6 py-4 font-medium">Source File</th>
               <th className="px-6 py-4 font-medium">Status</th>
@@ -50,16 +50,16 @@ export function JobsTable({ jobs, isLoading, onDelete, onDownload, onWatchVideo,
               <th className="px-6 py-4 font-medium text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
+          <tbody className="divide-y divide-border">
             {jobs.map((job) => (
-              <tr key={job.id} className="hover:bg-white/[0.02] transition-colors group">
+              <tr key={job.id} className="hover:bg-muted/30 transition-colors group">
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-card border border-white/10 flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-muted border border-border flex items-center justify-center shrink-0">
                       <FileVideo className="w-5 h-5 text-primary/70" />
                     </div>
                     <div className="max-w-[200px]">
-                      <div className="font-medium text-white truncate" title={job.originalName}>
+                      <div className="font-medium text-foreground truncate" title={job.originalName}>
                         {job.originalName}
                       </div>
                       <div className="text-xs text-muted-foreground font-mono mt-0.5">
@@ -81,14 +81,23 @@ export function JobsTable({ jobs, isLoading, onDelete, onDownload, onWatchVideo,
 
                 <td className="px-6 py-4 font-mono text-xs">
                   <div className="flex flex-col gap-1 text-muted-foreground">
-                    <div><span className="text-white/40 mr-2">DUR:</span> <span className="text-white">{job.durationSeconds ? formatDuration(job.durationSeconds) : '--'}</span></div>
+                    <div>
+                      <span className="text-muted-foreground/60 mr-2">DUR:</span>
+                      <span className="text-foreground font-medium">{job.durationSeconds ? formatDuration(job.durationSeconds) : '--'}</span>
+                    </div>
                   </div>
                 </td>
 
                 <td className="px-6 py-4 font-mono text-xs">
-                  <div className="flex flex-col gap-1 text-muted-foreground">
-                    <div><span className="text-white/40 mr-2">DET:</span> <span className="text-primary">{job.totalDetections ?? '--'}</span></div>
-                    <div><span className="text-white/40 mr-2">OBJ:</span> <span className="text-white">{job.totalTracks ?? '--'}</span></div>
+                  <div className="flex flex-col gap-1">
+                    <div>
+                      <span className="text-muted-foreground/60 mr-2">DET:</span>
+                      <span className="text-primary font-medium">{job.totalDetections ?? '--'}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground/60 mr-2">OBJ:</span>
+                      <span className="text-foreground font-medium">{job.totalTracks ?? '--'}</span>
+                    </div>
                   </div>
                 </td>
 
@@ -101,7 +110,7 @@ export function JobsTable({ jobs, isLoading, onDelete, onDownload, onWatchVideo,
                     {job.status === 'complete' && job.annotatedVideoPath && (
                       <button
                         onClick={() => onWatchVideo(job)}
-                        className="p-2 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white border border-blue-500/20 hover:border-blue-500 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                        className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200 hover:border-blue-600 transition-all focus:outline-none focus:ring-2 focus:ring-blue-300"
                         title="Watch Annotated Video"
                       >
                         <Play className="w-4 h-4" />
@@ -110,7 +119,7 @@ export function JobsTable({ jobs, isLoading, onDelete, onDownload, onWatchVideo,
                     {job.status === 'complete' && (
                       <button
                         onClick={() => onDownload(job.id)}
-                        className="p-2 rounded-lg bg-success/10 text-success hover:bg-success hover:text-success-foreground border border-success/20 hover:border-success transition-all focus:outline-none focus:ring-2 focus:ring-success/50"
+                        className="p-2 rounded-lg bg-success/10 text-success hover:bg-success hover:text-white border border-success/25 hover:border-success transition-all focus:outline-none focus:ring-2 focus:ring-success/30"
                         title="Download Excel Report"
                       >
                         <Download className="w-4 h-4" />
@@ -119,7 +128,7 @@ export function JobsTable({ jobs, isLoading, onDelete, onDownload, onWatchVideo,
                     <button
                       onClick={() => onDelete(job.id)}
                       disabled={isDeleting}
-                      className="p-2 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground border border-destructive/20 hover:border-destructive transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-destructive/50"
+                      className="p-2 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-white border border-destructive/25 hover:border-destructive transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-destructive/30"
                       title="Delete Job"
                     >
                       <Trash2 className="w-4 h-4" />

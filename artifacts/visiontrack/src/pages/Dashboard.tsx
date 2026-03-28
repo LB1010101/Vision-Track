@@ -17,7 +17,7 @@ export default function Dashboard() {
     <Layout>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-display font-semibold text-white tracking-wide">TELEMETRY OVERVIEW</h2>
+          <h2 className="text-2xl font-display font-semibold text-foreground tracking-wide">TELEMETRY OVERVIEW</h2>
           <p className="text-muted-foreground text-sm font-mono mt-1">System status and active analysis pipelines</p>
         </div>
       </div>
@@ -31,8 +31,8 @@ export default function Dashboard() {
       />
 
       <div className="mb-4 mt-12 flex items-center justify-between">
-        <h2 className="text-xl font-display font-semibold text-white tracking-wide flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-primary inline-block shadow-[0_0_8px_rgba(var(--primary),0.8)]" />
+        <h2 className="text-xl font-display font-semibold text-foreground tracking-wide flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-primary inline-block" />
           ANALYSIS LOGS
         </h2>
       </div>
