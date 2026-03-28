@@ -2,83 +2,120 @@
 
 ## Overview
 
-VisionTrack — a local CCTV video analytics platform. Upload video footage, run mock object detection/tracking, and download structured Excel reports.
+VisionTrack — a local CCTV video analytics platform deployed on a Lenovo P360 running Ubuntu with an Axelera AI M.2 card.
+
+Users upload video footage via a browser. The server runs object detection and tracking (Axelera Voyager SDK → Ultralytics YOLO + ByteTrack → mock fallback), generates a 6-sheet Excel analytics report with embedded charts, and produces an annotated video with bounding boxes for post-processing review.
 
 pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
 
 ## Stack
 
 - **Monorepo tool**: pnpm workspaces
-- **Node.js version**: 24
+- **Node.js version**: 22 (required on P360; Vite needs v20+)
 - **Package manager**: pnpm
 - **TypeScript version**: 5.9
 - **API framework**: Express 5
 - **Database**: PostgreSQL + Drizzle ORM
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
-- **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
-- **Frontend**: React + Vite, TailwindCSS, shadcn/ui, react-dropzone, framer-motion
-- **Excel generation**: ExcelJS (5-sheet workbook: Summary, Zone Summary, Class Breakdown, Tracks, Raw Detections)
-- **File upload**: multer (multipart/form-data, max 2GB)
+- **API codegen**: Orval (from OpenAPI spec `lib/api-spec/openapi.yaml`)
+- **Build**: esbuild (ESM bundle; native `.node` packages and `@resvg/resvg-js` externalised in `build.mjs`)
+- **Frontend**: React + Vite, TailwindCSS, react-dropzone, framer-motion — light mode theme
+- **Excel generation**: ExcelJS 4.x — 6-sheet workbook with data bar conditional formatting and embedded PNG charts
+- **Chart rendering**: `@resvg/resvg-js` (WASM SVG→PNG renderer — no browser/canvas native bindings needed)
+- **File upload**: multer (multipart/form-data, max 2 GB)
+- **Video annotation**: Python `detect.py` via subprocess — YOLO `result.plot()` + FFmpeg H.264 re-encode
 
 ## Structure
 
 ```text
 artifacts-monorepo/
-├── artifacts/              # Deployable applications
-│   ├── api-server/         # Express API server
-│   │   ├── src/lib/detection.ts   # Mock YOLO detection + Excel report generator
-│   │   ├── src/routes/jobs.ts     # Upload, process, status, download, delete endpoints
-│   │   ├── uploads/               # Uploaded video files (runtime)
-│   │   └── reports/               # Generated Excel reports (runtime)
-│   └── visiontrack/        # React + Vite frontend (dark mode surveillance UI)
-├── lib/                    # Shared libraries
-│   ├── api-spec/           # OpenAPI spec + Orval codegen config
-│   ├── api-client-react/   # Generated React Query hooks
-│   ├── api-zod/            # Generated Zod schemas from OpenAPI
-│   └── db/                 # Drizzle ORM schema + DB connection
-│       └── src/schema/jobs.ts  # Jobs table schema
-├── scripts/                # Utility scripts (single workspace package)
-├── pnpm-workspace.yaml     # pnpm workspace (artifacts/*, lib/*, lib/integrations/*, scripts)
-├── tsconfig.base.json      # Shared TS options (composite, bundler resolution, es2022)
-├── tsconfig.json           # Root TS project references
-└── package.json            # Root package with hoisted devDeps
+├── artifacts/
+│   ├── api-server/                       # Express API (Node.js)
+│   │   ├── src/lib/detection.ts          # Python subprocess + mock pipeline + Excel + chart generation
+│   │   ├── src/routes/jobs.ts            # Upload, process, download, delete, video stream endpoints
+│   │   ├── detect.py                     # Python: Axelera → YOLO → annotated video output
+│   │   ├── build.mjs                     # esbuild config (externalises @resvg/resvg-js and *.node)
+│   │   ├── uploads/                      # Raw uploaded video files (runtime)
+│   │   ├── reports/                      # Generated Excel reports (runtime)
+│   │   └── annotated/                    # H.264 annotated video output (runtime)
+│   └── visiontrack/                      # React + Vite frontend (light mode)
+│       └── src/
+│           ├── pages/Dashboard.tsx       # Main page
+│           ├── components/
+│           │   ├── Layout.tsx            # Header/shell
+│           │   ├── StatsBar.tsx          # Job counters
+│           │   ├── UploadZone.tsx        # Drag-and-drop upload
+│           │   ├── JobsTable.tsx         # Jobs list with Play/Download/Delete buttons
+│           │   ├── StatusBadge.tsx       # Status pill component
+│           │   └── VideoPlayerModal.tsx  # In-browser annotated video player
+│           ├── hooks/use-jobs.ts         # React Query data hooks
+│           └── index.css                 # CSS variables (light mode palette) + Tailwind
+├── lib/
+│   ├── api-spec/openapi.yaml             # OpenAPI 3.0 spec (source of truth for types)
+│   ├── api-client-react/                 # Generated React Query hooks (Orval)
+│   ├── api-zod/                          # Generated Zod schemas (Orval)
+│   └── db/src/schema/jobs.ts             # Drizzle jobs table (includes annotated_video_path column)
+├── scripts/
+├── pnpm-workspace.yaml
+├── tsconfig.base.json                    # Shared TS options (composite, bundler resolution, es2022)
+├── tsconfig.json                         # Root project references
+├── package.json                          # Root package with hoisted devDeps
+└── HANDOVER.md                           # Full handover doc for P360 deployment
 ```
 
 ## API Endpoints
 
 All endpoints are under `/api`:
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | /healthz | Health check |
-| GET | /jobs | List all jobs |
-| POST | /upload | Upload video (multipart/form-data, field: `file`) |
-| POST | /process/:jobId | Trigger processing pipeline |
-| GET | /status/:jobId | Poll job status |
-| GET | /download/:jobId | Download Excel report |
-| DELETE | /jobs/:jobId | Delete job and files |
+| Method | Endpoint             | Description                                                        |
+|--------|----------------------|--------------------------------------------------------------------|
+| GET    | /healthz             | Health check                                                       |
+| GET    | /jobs                | List all jobs (ordered newest first)                               |
+| POST   | /upload              | Upload video (multipart/form-data, field: `file`)                  |
+| POST   | /process/:jobId      | Trigger detection pipeline (non-blocking, fires and returns 202)   |
+| GET    | /status/:jobId       | Poll single job status                                             |
+| GET    | /download/:jobId     | Download Excel report                                              |
+| GET    | /video/:jobId        | Stream annotated video with HTTP range request support             |
+| DELETE | /jobs/:jobId         | Delete job, video, report, and annotated video from disk           |
 
 ## Processing Pipeline
 
-`artifacts/api-server/src/lib/detection.ts` runs a mock YOLO detection pipeline:
-1. Estimates video duration from file size
-2. Simulates frame-by-frame detection with realistic class distributions (person, car, truck, etc.)
-3. Tracks objects across frames with unique IDs
-4. Generates 5-sheet Excel report via ExcelJS
+1. `POST /upload` saves video to `uploads/`, creates `pending` DB row
+2. `POST /process/:jobId` fires `setImmediate` (non-blocking) and returns immediately
+3. Inside `setImmediate`, `runDetectionPipeline()` in `detection.ts`:
+   - Spawns `detect.py` as a Python subprocess
+   - `detect.py` runs: Axelera Voyager SDK → Ultralytics YOLO + ByteTrack → mock fallback
+   - `detect.py` streams NDJSON to stdout (`detection`, `progress`, `log`, `summary`, `error` types)
+   - `detect.py` also writes an annotated video to `annotated/` and re-encodes to H.264 via FFmpeg
+   - Node collects all detections and the summary message
+   - `generateExcelReport()` produces a 6-sheet `.xlsx` with data bars + embedded SVG→PNG charts
+4. DB row updated: `status=complete`, stats, `report_path`, `annotated_video_path`
+
+## Database Schema
+
+Single table `jobs`. Key columns:
+
+| Column                 | Type     | Notes                                              |
+|------------------------|----------|----------------------------------------------------|
+| `status`               | text     | `pending` / `processing` / `complete` / `failed`   |
+| `annotated_video_path` | text     | Absolute path to H.264 annotated MP4; null if N/A  |
+| `report_path`          | text     | Absolute path to generated `.xlsx`                 |
+| `total_detections`     | integer  | Frame-level detection events                       |
+| `total_tracks`         | integer  | Unique tracked objects (distinct track IDs)        |
+
+Push schema changes:
+```bash
+DATABASE_URL=postgresql://visiontrack:visiontrack@localhost:5432/visiontrack \
+  pnpm --filter @workspace/db run push
+```
 
 ## TypeScript & Composite Projects
 
 Every package extends `tsconfig.base.json` which sets `composite: true`. The root `tsconfig.json` lists all packages as project references.
 
 - **Always typecheck from the root** — run `pnpm run typecheck`
-- **`emitDeclarationOnly`** — we only emit `.d.ts` files during typecheck
+- **`emitDeclarationOnly`** — only `.d.ts` files are emitted during typecheck
 - **Project references** — when package A depends on package B, A's `tsconfig.json` must list B in its `references` array
-
-## Root Scripts
-
-- `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
-- `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
 
 ## Codegen
 
@@ -87,20 +124,23 @@ Run after any change to `lib/api-spec/openapi.yaml`:
 pnpm --filter @workspace/api-spec run codegen
 ```
 
-## Database
+## Known Gotchas
 
-Push schema changes:
+- **ExcelJS data bars**: Do NOT pass `gradient: true` or `border: false` to `addConditionalFormatting` data bar rules — ExcelJS 4.x does not support these and throws `TypeError: Cannot read properties of undefined (reading 'forEach')` when writing the file.
+- **`@resvg/resvg-js` must be externalised in `build.mjs`**: It uses a platform-specific `.node` native binding. The `external` array in `build.mjs` lists all `@resvg/resvg-js*` variants.
+- **Vite proxy**: `vite.config.ts` proxies `/api` → `localhost:8080` only when `REPL_ID` env var is absent (i.e. on P360, not in Replit cloud).
+- **Non-deterministic tracking**: ByteTrack assigns track IDs dynamically; results vary slightly between runs on the same video. This is expected.
+- **Annotated video requires FFmpeg**: `sudo apt install -y ffmpeg` on P360.
+- **GitHub sync required for P360 updates**: The Replit `gitsafe-backup` remote is not reachable externally. Push to GitHub (`git push github master`) then pull on P360.
+
+## P360 Startup Commands
+
+Terminal 1 (API server):
 ```bash
-pnpm --filter @workspace/db run push
+PORT=8080 DATABASE_URL=postgresql://visiontrack:visiontrack@localhost:5432/visiontrack VISIONTRACK_PYTHON=/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/.venv/bin/python3 pnpm --filter @workspace/api-server run dev
 ```
 
-## Replacing Mock Detection with Real YOLO
-
-Replace `runDetectionPipeline()` in `artifacts/api-server/src/lib/detection.ts` with real YOLO:
-
-```typescript
-import { YOLO } from "ultralytics"; // or Axelera SDK
-
-const model = new YOLO("yolov8n.pt");
-// Replace the mock loop with model.track(videoPath, { stream: true })
+Terminal 2 (frontend):
+```bash
+PORT=3000 BASE_PATH=/ pnpm --filter @workspace/visiontrack run dev
 ```

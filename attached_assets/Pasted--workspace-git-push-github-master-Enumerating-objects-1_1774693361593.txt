@@ -1,0 +1,47 @@
+~/workspace$ git push github master
+Enumerating objects: 13, done.
+Counting objects: 100% (13/13), done.
+Delta compression using up to 8 threads
+Compressing objects: 100% (7/7), done.
+Writing objects: 100% (7/7), 1.05 KiB | 1.05 MiB/s, done.
+Total 7 (delta 4), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (4/4), completed with 4 local objects.
+remote: This repository moved. Please use the new location:
+remote:   https://github.com/LB1010101/Vision-Track.git
+To https://github.com/LB1010101/vision-track.git
+   8c760f4..06ed2ca  master -> master
+~/workspace$ cd ~/Downloads/Vision-Track/Vision-Track
+BASE="https://raw.githubusercontent.com/LB1010101/vision-track/master"
+curl -fL "$BASE/artifacts/api-server/src/lib/detection.ts" -o artifacts/api-server/src/lib/detection.ts
+curl -fL "$BASE/artifacts/api-server/detect.py" -o artifacts/api-server/detect.py
+curl -fL "$BASE/artifacts/api-server/build.mjs" -o artifacts/api-server/build.mjs
+curl -fL "$BASE/artifacts/api-server/package.json" -o artifacts/api-server/package.json
+pnpm install
+bash: cd: /home/runner/Downloads/Vision-Track/Vision-Track: No such file or directory
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 29525  100 29525    0     0   280k      0 --:--:-- --:--:-- --:--:--  282k
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 14027  100 14027    0     0   123k      0 --:--:-- --:--:-- --:--:--  124k
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  3673  100  3673    0     0  35762      0 --:--:-- --:--:-- --:--:-- 36009
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   996  100   996    0     0   9407      0 --:--:-- --:--:-- --:--:--  9485
+Scope: all 9 workspace projects
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+   ╭──────────────────────────────────────────╮
+   │                                          │
+   │   Update available! 10.26.1 → 10.33.0.   │
+   │   Changelog: https://pnpm.io/v/10.33.0   │
+   │     To update, run: pnpm add -g pnpm     │
+   │                                          │
+   ╰──────────────────────────────────────────╯
+
+. preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit…
+└─ Done in 30ms
+Done in 1.8s using pnpm v10.26.1

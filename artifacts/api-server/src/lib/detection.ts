@@ -1,19 +1,41 @@
+/**
+ * detection.ts — VisionTrack Detection Orchestrator
+ *
+ * This module manages the full detection-to-report pipeline:
+ *   1. Decides whether to run the Python subprocess (detect.py) or the mock pipeline.
+ *   2. Spawns detect.py and parses its NDJSON stdout stream.
+ *   3. Falls back to a synthetic mock if Python is unavailable.
+ *   4. Calls generateExcelReport() to write the 6-sheet .xlsx workbook.
+ *   5. Embeds bar/line chart images (SVG → PNG via @resvg/resvg-js) into the workbook.
+ *
+ * Key environment variables consumed here:
+ *   VISIONTRACK_PYTHON     — path to the Python executable (defaults to python3)
+ *   VISIONTRACK_MODEL      — YOLO model file or Axelera .axm path (defaults to yolov8n.pt)
+ *   VISIONTRACK_CONFIDENCE — minimum confidence threshold (defaults to 0.7)
+ *   VISIONTRACK_ZONES      — JSON array of named polygon zones
+ *   VISIONTRACK_MOCK       — set "true" to skip Python entirely (for dev without GPU)
+ */
+
 import path from "path";
 import { spawn } from "child_process";
 import fs from "fs";
 import ExcelJS from "exceljs";
 import { logger } from "./logger";
 
+/** Absolute path to the Python detection script relative to CWD (the api-server package root). */
 const DETECT_SCRIPT = path.resolve(process.cwd(), "detect.py");
 
+/** Stats returned from the pipeline; stored directly into the jobs DB row. */
 export interface VideoStats {
   fileSizeBytes: number;
   durationSeconds: number;
   totalDetections: number;
   totalTracks: number;
+  /** Absolute path to the H.264 annotated video, or null if not generated. */
   annotatedVideoPath: string | null;
 }
 
+/** A single object detection event emitted by detect.py. */
 interface Detection {
   frame: number;
   timestamp_s: number;
@@ -27,6 +49,7 @@ interface Detection {
   bbox_h: number;
 }
 
+/** The final summary line emitted by detect.py after processing completes. */
 interface SummaryMsg {
   total_detections: number;
   total_tracks: number;
@@ -34,17 +57,32 @@ interface SummaryMsg {
   fps: number;
   width: number;
   height: number;
+  /** Path to the re-encoded H.264 annotated video, or empty string if not generated. */
   annotated_video_path?: string;
 }
 
+/** Returns the Python executable to use, preferring VISIONTRACK_PYTHON env var. */
 function getPythonBin(): string {
   return process.env["VISIONTRACK_PYTHON"] ?? "python3";
 }
 
+/** Returns the model path to use, preferring VISIONTRACK_MODEL env var. */
 function getModelPath(): string {
   return process.env["VISIONTRACK_MODEL"] ?? "yolov8n.pt";
 }
 
+/**
+ * Spawn detect.py as a child process and collect its NDJSON output.
+ *
+ * detect.py writes one JSON object per line to stdout:
+ *   - type:"detection"  → each detected object per frame
+ *   - type:"summary"    → final stats (emitted once at the end)
+ *   - type:"progress"   → frame progress tick (logged at debug level)
+ *   - type:"log"        → informational messages from Python
+ *   - type:"error"      → non-fatal errors from Python
+ *
+ * Rejects if the process exits non-zero or never emits a summary line.
+ */
 async function runPythonDetect(
   videoPath: string,
   annotatedVideoPath: string
@@ -53,6 +91,7 @@ async function runPythonDetect(
     const pythonBin = getPythonBin();
     const modelPath = getModelPath();
 
+    // Forward the current process env plus overrides for model, confidence, zones, and output path.
     const env: Record<string, string> = {
       ...Object.fromEntries(
         Object.entries(process.env).filter(([, v]) => v !== undefined)
@@ -71,11 +110,13 @@ async function runPythonDetect(
     const detections: Detection[] = [];
     let summary: SummaryMsg | null = null;
     let stderr = "";
+    // Buffer partial stdout lines — stdout chunks may split across JSON boundaries.
     let stdout = "";
 
     child.stdout.on("data", (chunk: Buffer) => {
       stdout += chunk.toString();
       const lines = stdout.split("\n");
+      // Keep the incomplete last fragment for the next chunk.
       stdout = lines.pop() ?? "";
 
       for (const line of lines) {
@@ -100,12 +141,14 @@ async function runPythonDetect(
       }
     });
 
+    // Collect stderr for error reporting; don't reject on stderr alone.
     child.stderr.on("data", (chunk: Buffer) => {
       stderr += chunk.toString();
     });
 
     child.on("close", (code) => {
       if (stderr) {
+        // Log last 2000 chars to avoid flooding — YOLO often prints progress to stderr.
         logger.warn({ stderr: stderr.slice(-2000) }, "detect.py stderr");
       }
       if (code !== 0) {
@@ -125,6 +168,14 @@ async function runPythonDetect(
   });
 }
 
+/**
+ * Mock detection pipeline — used when detect.py is unavailable or VISIONTRACK_MOCK=true.
+ *
+ * Generates synthetic detections with realistic class distributions, track lifetimes,
+ * and zone assignments. Useful for frontend/UX development without a GPU.
+ *
+ * Duration is estimated from file size assuming ~500 KB/s average bitrate.
+ */
 async function runMockPipeline(
   videoPath: string,
   fileSizeBytes: number
@@ -138,15 +189,18 @@ async function runMockPipeline(
   const randInt = (min: number, max: number) => Math.floor(rand(min, max));
   const pick = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
+  // Estimate duration from file size; cap at 5000 frames to prevent memory issues.
   const estimatedDuration = Math.max(10, fileSizeBytes / (500 * 1024));
   const fps = 25;
   const numFrames = Math.min(Math.floor(estimatedDuration * fps), 5000);
 
   const detections: Detection[] = [];
+  // Track active objects across frames; each object lives for a random number of frames.
   const activeObjects = new Map<number, { class: string; zone: string; deathFrame: number }>();
   let nextTrackId = 1;
 
   for (let frame = 0; frame < numFrames; frame += 5) {
+    // 30% chance to spawn a new object each sample, up to 20 concurrent objects.
     if (Math.random() < 0.3 && activeObjects.size < 20) {
       const id = nextTrackId++;
       activeObjects.set(id, {
@@ -182,11 +236,23 @@ async function runMockPipeline(
       fps,
       width: 1920,
       height: 1080,
+      // No annotated video for mock runs.
       annotated_video_path: "",
     },
   };
 }
 
+/**
+ * Main pipeline entry point called by the /api/process/:jobId route.
+ *
+ * Decision order:
+ *   1. If VISIONTRACK_MOCK=true → mock pipeline.
+ *   2. If detect.py exists on disk → spawn Python, fall back to mock on failure.
+ *   3. Otherwise → mock pipeline with a warning.
+ *
+ * After collecting detections, generates the 6-sheet Excel report.
+ * Returns VideoStats which is written back to the jobs DB row.
+ */
 export async function runDetectionPipeline(
   videoPath: string,
   reportPath: string,
@@ -222,6 +288,7 @@ export async function runDetectionPipeline(
 
   await generateExcelReport(videoPath, fileSizeBytes, summary, detections, reportPath);
 
+  // Validate the annotated video path: it must exist on disk to be stored in the DB.
   const resolvedAnnotatedPath = summary.annotated_video_path && fs.existsSync(summary.annotated_video_path)
     ? summary.annotated_video_path
     : null;
@@ -235,6 +302,30 @@ export async function runDetectionPipeline(
   };
 }
 
+/**
+ * Build and write the 6-sheet Excel workbook.
+ *
+ * Sheets (in order):
+ *   1. Summary         — file info, overall stats, peak activity minute
+ *   2. Zone Summary    — per-zone detection counts + data bars + bar chart image
+ *   3. Class Breakdown — per-class counts, confidence ranges + data bars + bar chart image
+ *   4. Timeline        — per-minute activity table + data bars + line chart image
+ *   5. Tracks          — per tracked object statistics (top 500 by detection count)
+ *   6. Raw Detections  — every detection (sampled to 2000 rows max)
+ *
+ * All sheets get coloured tabs and frozen header rows.
+ *
+ * Chart images are generated as SVG strings and rasterised to PNG using
+ * @resvg/resvg-js (pure WASM — no canvas or browser APIs needed). Chart
+ * generation is wrapped in try/catch; a failure skips charts but does NOT
+ * fail the overall report write.
+ *
+ * IMPORTANT — ExcelJS data bar compatibility:
+ *   ExcelJS 4.x supports only a subset of the XLSX data bar spec.
+ *   Do NOT pass `gradient` or `border` properties to the dataBar object —
+ *   ExcelJS does not handle them and will throw `undefined.forEach()` when
+ *   writing the file. Only use: minLength, maxLength, cfvo, color, showValue.
+ */
 async function generateExcelReport(
   videoPath: string,
   fileSizeBytes: number,
@@ -246,6 +337,7 @@ async function generateExcelReport(
   workbook.creator = "VisionTrack";
   workbook.created = new Date();
 
+  /** Shared header cell style: white bold text on deep navy background. */
   const headerStyle: Partial<ExcelJS.Style> = {
     font: { bold: true, color: { argb: "FFFFFFFF" } },
     fill: { type: "pattern", pattern: "solid", fgColor: { argb: "FF1E40AF" } },
@@ -253,9 +345,10 @@ async function generateExcelReport(
   };
 
   const fps = summary.fps || 25;
+  // Guard against zero detections for percentage calculations.
   const totalDet = detections.length || 1;
 
-  // ── Summary ──────────────────────────────────────────────────────────────
+  // ── Sheet 1: Summary ──────────────────────────────────────────────────────
   const summarySheet = workbook.addWorksheet("Summary");
   summarySheet.columns = [
     { header: "Property", key: "property", width: 30 },
@@ -265,7 +358,7 @@ async function generateExcelReport(
 
   const sizeMB = (fileSizeBytes / (1024 * 1024)).toFixed(2);
 
-  // Compute peak activity (which minute had most detections)
+  // Find the minute with the highest detection count for the "Peak Activity" row.
   const minuteBuckets: Record<number, number> = {};
   for (const d of detections) {
     const minute = Math.floor(d.timestamp_s / 60);
@@ -292,16 +385,16 @@ async function generateExcelReport(
     { property: "Confidence Threshold", value: process.env["VISIONTRACK_CONFIDENCE"] ?? "0.35" },
   ]);
 
-  // Highlight key rows
+  // Highlight total detections and tracked objects in bold blue.
   [7, 8].forEach(rowNum => {
     const row = summarySheet.getRow(rowNum + 1);
     row.getCell(2).font = { bold: true, color: { argb: "FF1E40AF" } };
   });
 
-  // ── Zone Summary ─────────────────────────────────────────────────────────
+  // ── Sheet 2: Zone Summary ─────────────────────────────────────────────────
   const zoneSheet = workbook.addWorksheet("Zone Summary");
 
-  // Build per-zone stats
+  // Aggregate detections by zone: count events and collect unique track IDs.
   const zoneData: Record<string, { detections: number; trackIds: Set<number> }> = {};
   for (const d of detections) {
     if (!zoneData[d.zone]) zoneData[d.zone] = { detections: 0, trackIds: new Set() };
@@ -317,6 +410,7 @@ async function generateExcelReport(
   ];
   zoneSheet.getRow(1).eachCell((cell) => { Object.assign(cell, headerStyle); });
 
+  // Sort zones by detection count descending so busiest zones appear first.
   const sortedZones = Object.entries(zoneData).sort((a, b) => b[1].detections - a[1].detections);
   let zoneRowNum = 2;
   for (const [zone, data] of sortedZones) {
@@ -329,7 +423,9 @@ async function generateExcelReport(
     zoneRowNum++;
   }
 
-  // Data bars on Detections column
+  // In-cell data bars for visual comparison.
+  // NOTE: Only pass properties ExcelJS 4.x supports (minLength, maxLength, cfvo, color, showValue).
+  //       `gradient` and `border` are NOT supported and will crash the write with undefined.forEach().
   if (sortedZones.length > 0) {
     zoneSheet.addConditionalFormatting({
       ref: `B2:B${zoneRowNum - 1}`,
@@ -361,9 +457,10 @@ async function generateExcelReport(
     });
   }
 
-  // ── Class Breakdown ───────────────────────────────────────────────────────
+  // ── Sheet 3: Class Breakdown ───────────────────────────────────────────────
   const classSheet = workbook.addWorksheet("Class Breakdown");
 
+  // Aggregate per object class: count, confidence stats, unique track IDs.
   const classData: Record<string, {
     count: number; totalConf: number; minConf: number; maxConf: number; trackIds: Set<number>
   }> = {};
@@ -435,15 +532,16 @@ async function generateExcelReport(
     });
   }
 
-  // ── Timeline (per-minute activity) ─────────────────────────────────────
+  // ── Sheet 4: Timeline (per-minute activity) ────────────────────────────────
   const timelineSheet = workbook.addWorksheet("Timeline");
 
-  // Build minute-by-minute data
+  // Build a bucket per minute covering the full video duration.
   const minuteData: Record<number, { detections: number; trackIds: Set<number>; classes: Record<string, number> }> = {};
   const maxMinute = detections.length > 0
     ? Math.floor(Math.max(...detections.map(d => d.timestamp_s)) / 60)
     : 0;
 
+  // Pre-fill all minutes with empty buckets so the table has no gaps.
   for (let m = 0; m <= maxMinute; m++) {
     minuteData[m] = { detections: 0, trackIds: new Set(), classes: {} };
   }
@@ -454,7 +552,7 @@ async function generateExcelReport(
     minuteData[m].classes[d.class] = (minuteData[m].classes[d.class] ?? 0) + 1;
   }
 
-  // Get top 3 classes for timeline columns
+  // Use top 3 object classes as dynamic columns so the sheet adapts to the video content.
   const topClasses = sortedClasses.slice(0, 3).map(([cls]) => cls);
 
   timelineSheet.columns = [
@@ -514,7 +612,7 @@ async function generateExcelReport(
       }],
     });
 
-    // Highlight peak minute row
+    // Highlight the busiest minute in amber so it stands out.
     const peakRow = Object.entries(minuteData)
       .sort((a, b) => b[1].detections - a[1].detections)[0];
     if (peakRow) {
@@ -527,8 +625,11 @@ async function generateExcelReport(
     }
   }
 
-  // ── Tracks ────────────────────────────────────────────────────────────────
+  // ── Sheet 5: Tracks ────────────────────────────────────────────────────────
   const tracksSheet = workbook.addWorksheet("Tracks");
+
+  // Build a map of track_id → { class, zone, all frames, all confidences }.
+  // Tracks with track_id < 0 are untracked detections (e.g. when ByteTrack loses an object).
   const trackMap = new Map<number, {
     class: string; zone: string; frames: number[]; confidences: number[];
   }>();
@@ -541,6 +642,7 @@ async function generateExcelReport(
     t.frames.push(d.frame);
     t.confidences.push(d.confidence);
   }
+
   tracksSheet.columns = [
     { header: "Track ID", key: "track_id", width: 12 },
     { header: "Class", key: "class", width: 16 },
@@ -552,6 +654,8 @@ async function generateExcelReport(
     { header: "Avg Confidence", key: "avg_confidence", width: 18 },
   ];
   tracksSheet.getRow(1).eachCell((cell) => { Object.assign(cell, headerStyle); });
+
+  // Sort by detection count descending; cap at 500 tracks to keep file size manageable.
   let trackCount = 0;
   let trackRowNum = 2;
   for (const [id, t] of [...trackMap.entries()].sort((a, b) => b[1].frames.length - a[1].frames.length)) {
@@ -572,7 +676,7 @@ async function generateExcelReport(
     trackRowNum++;
   }
 
-  // Data bars on Duration column
+  // Data bar on Duration column (red) to surface longest-visible objects quickly.
   if (trackCount > 0) {
     tracksSheet.addConditionalFormatting({
       ref: `F2:F${trackRowNum - 1}`,
@@ -590,7 +694,7 @@ async function generateExcelReport(
     });
   }
 
-  // ── Raw Detections ────────────────────────────────────────────────────────
+  // ── Sheet 6: Raw Detections ────────────────────────────────────────────────
   const rawSheet = workbook.addWorksheet("Raw Detections");
   rawSheet.columns = [
     { header: "Frame", key: "frame", width: 10 },
@@ -605,6 +709,8 @@ async function generateExcelReport(
     { header: "BBox H", key: "bbox_h", width: 10 },
   ];
   rawSheet.getRow(1).eachCell((cell) => { Object.assign(cell, headerStyle); });
+
+  // Sample down to 2000 rows max to avoid Excel slowness on high-detection videos.
   const sampled = detections.length > 2000
     ? detections.filter((_, i) => i % Math.ceil(detections.length / 2000) === 0)
     : detections;
@@ -612,20 +718,26 @@ async function generateExcelReport(
     rawSheet.addRow({ ...d, confidence: d.confidence.toFixed(4) });
   }
 
-  // Tab colours
+  // ── Global formatting: tab colours + frozen header rows ───────────────────
+  // Tab colours match the six sheet themes: blue, green, amber, purple, red, teal.
   const tabColors = ["1E40AF", "059669", "D97706", "7C3AED", "DC2626", "0891B2"];
   workbook.worksheets.forEach((ws, i) => {
     ws.properties.tabColor = { argb: `FF${tabColors[i % tabColors.length]}` };
   });
 
-  // Freeze header rows on all sheets
+  // Freeze the first row on every sheet so headers stay visible while scrolling.
   workbook.worksheets.forEach((ws) => {
     ws.views = [{ state: "frozen", xSplit: 0, ySplit: 1 }];
   });
 
-  // ── Embed charts ─────────────────────────────────────────────────────────
+  // ── Embed chart images ────────────────────────────────────────────────────
+  // Charts are generated as SVG strings and rasterised to PNG using @resvg/resvg-js.
+  // This is a pure WASM renderer — no browser, canvas, or native bindings needed.
+  //
+  // The entire block is wrapped in try/catch so a chart failure (e.g. missing
+  // native module after a fresh pnpm install) does not fail the whole report write.
   try {
-    // Zone bar chart
+    // Zone bar chart — placed to the right of the data table (columns E–M)
     if (sortedZones.length > 0) {
       const zonePng = await svgToPng(generateBarChartSvg(
         sortedZones.map(([z, d]) => ({ label: z.length > 14 ? z.slice(0, 13) + "…" : z, value: d.detections })),
@@ -635,7 +747,7 @@ async function generateExcelReport(
       zoneSheet.addImage(zoneImgId, { tl: { col: 5, row: 0 }, br: { col: 13, row: 18 }, editAs: "oneCell" });
     }
 
-    // Class bar chart
+    // Class bar chart — placed to the right of the data table (columns I–Q)
     if (sortedClasses.length > 0) {
       const classPng = await svgToPng(generateBarChartSvg(
         sortedClasses.slice(0, 10).map(([c, d]) => ({ label: c, value: d.count })),
@@ -645,7 +757,7 @@ async function generateExcelReport(
       classSheet.addImage(classImgId, { tl: { col: 8, row: 0 }, br: { col: 16, row: 18 }, editAs: "oneCell" });
     }
 
-    // Timeline line chart
+    // Timeline line chart — placed below the data table (startRow = after last minute row)
     if (maxMinute > 0) {
       const timelineEntries = Object.entries(minuteData)
         .sort((a, b) => Number(a[0]) - Number(b[0]))
@@ -656,6 +768,7 @@ async function generateExcelReport(
       timelineSheet.addImage(tlImgId, { tl: { col: 0, row: startRow }, br: { col: 10, row: startRow + 16 }, editAs: "oneCell" });
     }
   } catch (chartErr) {
+    // Non-fatal: log and continue. The report is still complete, just without charts.
     logger.warn({ err: chartErr }, "Chart generation skipped (non-fatal)");
   }
 
@@ -663,10 +776,20 @@ async function generateExcelReport(
   logger.info({ outputPath }, "Excel report written");
 }
 
+/** XML-escape a string for safe use in SVG text elements. */
 function esc(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
+/**
+ * Generate a vertical bar chart as an SVG string.
+ *
+ * @param data   Array of { label, value } pairs (sorted by caller)
+ * @param title  Chart title displayed at the top
+ * @param color  Hex color string (e.g. "#1E40AF") for bars
+ * @param width  SVG canvas width in pixels (default 520)
+ * @param height SVG canvas height in pixels (default 320)
+ */
 function generateBarChartSvg(
   data: { label: string; value: number }[],
   title: string,
@@ -675,13 +798,15 @@ function generateBarChartSvg(
   height = 320
 ): string {
   if (data.length === 0) return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="${width}" height="${height}" fill="white"/></svg>`;
+
   const pad = { top: 48, right: 24, bottom: 70, left: 56 };
-  const cw = width - pad.left - pad.right;
-  const ch = height - pad.top - pad.bottom;
+  const cw = width - pad.left - pad.right;   // chart area width
+  const ch = height - pad.top - pad.bottom;  // chart area height
   const max = Math.max(...data.map(d => d.value), 1);
   const barW = Math.max(8, (cw / data.length) * 0.65);
   const gap = cw / data.length;
 
+  // Horizontal grid lines and Y-axis labels.
   const yTicks = 5;
   const yLines = Array.from({ length: yTicks + 1 }, (_, i) => {
     const val = Math.round((max / yTicks) * i);
@@ -690,6 +815,7 @@ function generateBarChartSvg(
     <text x="${pad.left - 6}" y="${y + 4}" text-anchor="end" font-size="10" fill="#6b7280">${val}</text>`;
   }).join("\n");
 
+  // Bar rectangles with value labels above and rotated X-axis labels below.
   const bars = data.map((d, i) => {
     const bh = Math.max(2, (d.value / max) * ch);
     const x = pad.left + i * gap + (gap - barW) / 2;
@@ -710,6 +836,15 @@ function generateBarChartSvg(
 </svg>`;
 }
 
+/**
+ * Generate a line/area chart as an SVG string.
+ *
+ * Returns a blank SVG if fewer than 2 data points are provided (can't draw a meaningful line).
+ *
+ * @param data   Time-series array: { label: "M0", value: N }
+ * @param title  Chart title
+ * @param color  Hex color for the line and filled area
+ */
 function generateLineChartSvg(
   data: { label: string; value: number }[],
   title: string,
@@ -718,11 +853,13 @@ function generateLineChartSvg(
   height = 280
 ): string {
   if (data.length < 2) return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="${width}" height="${height}" fill="white"/></svg>`;
+
   const pad = { top: 44, right: 24, bottom: 44, left: 56 };
   const cw = width - pad.left - pad.right;
   const ch = height - pad.top - pad.bottom;
   const max = Math.max(...data.map(d => d.value), 1);
 
+  // Map data values to pixel coordinates.
   const points = data.map((d, i) => ({
     x: pad.left + (i / (data.length - 1)) * cw,
     y: pad.top + ch - (d.value / max) * ch,
@@ -731,6 +868,8 @@ function generateLineChartSvg(
   }));
 
   const polyline = points.map(p => `${p.x},${p.y}`).join(" ");
+
+  // Filled area under the line, closed to the X axis.
   const area = [
     `${points[0].x},${pad.top + ch}`,
     ...points.map(p => `${p.x},${p.y}`),
@@ -745,7 +884,7 @@ function generateLineChartSvg(
     <text x="${pad.left - 6}" y="${y + 4}" text-anchor="end" font-size="10" fill="#6b7280">${val}</text>`;
   }).join("\n");
 
-  // Show x-axis labels for first, middle, last
+  // Show X-axis labels at first, middle, and last data point only to avoid crowding.
   const xLabels = [0, Math.floor(data.length / 2), data.length - 1]
     .filter((v, i, a) => a.indexOf(v) === i)
     .map(i => `<text x="${points[i].x}" y="${pad.top + ch + 18}" text-anchor="middle" font-size="10" fill="#6b7280">${esc(points[i].label)}</text>`)
@@ -764,12 +903,27 @@ function generateLineChartSvg(
 </svg>`;
 }
 
+/**
+ * Rasterise an SVG string to a PNG Buffer using @resvg/resvg-js.
+ *
+ * @resvg/resvg-js uses a WASM build of the Rust `resvg` crate — no native canvas
+ * or browser APIs needed. It is dynamically imported so that if the package is not
+ * installed (e.g. fresh clone before `pnpm install`), the error surfaces inside the
+ * chart try/catch block and does not crash the server.
+ *
+ * Important: @resvg/resvg-js must be listed in the `external` array in build.mjs
+ * so esbuild does not try to bundle its platform-specific .node binary.
+ */
 async function svgToPng(svg: string): Promise<Buffer> {
   const { Resvg } = await import("@resvg/resvg-js");
   const resvg = new Resvg(svg, { fitTo: { mode: "original" } });
   return Buffer.from(resvg.render().asPng());
 }
 
+/**
+ * Format a duration in seconds as "M:SS" for display in the Timeline sheet.
+ * Example: 125 → "2:05"
+ */
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
