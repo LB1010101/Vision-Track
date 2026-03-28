@@ -1,0 +1,234 @@
+ubuntu@axe-ubuntu-360:~/Downloads/Vision-Track/Vision-Track$ PORT=8080 DATABASE_URL=postgresql://visiontrack:visiontrack@localhost:5432/visiontrack VISIONTRACK_PYTHON=/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/.venv/bin/python3 pnpm --filter @workspace/api-server run dev
+
+> @workspace/api-server@0.0.0 dev /home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server
+> export NODE_ENV=development && pnpm run build && pnpm run start
+
+
+> @workspace/api-server@0.0.0 build /home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server
+> node ./build.mjs
+
+
+  dist/index.mjs                       4.4mb ⚠️
+  dist/pino-worker.mjs               153.4kb
+  dist/pino-file.mjs                 142.1kb
+  dist/pino-pretty.mjs               114.6kb
+  dist/thread-stream-worker.mjs        7.3kb
+  dist/index.mjs.map                   7.7mb
+  dist/pino-worker.mjs.map           256.9kb
+  dist/pino-file.mjs.map             229.1kb
+  dist/pino-pretty.mjs.map           203.9kb
+  dist/thread-stream-worker.mjs.map   12.0kb
+
+⚡ Done in 139ms
+
+> @workspace/api-server@0.0.0 start /home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server
+> node --enable-source-maps ./dist/index.mjs
+
+[13:18:19.308] INFO (92381): Server listening
+    port: 8080
+[13:18:29.861] INFO (92381): request completed
+    req: {
+      "id": 1,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 200
+    }
+    responseTime: 19
+[13:18:35.845] INFO (92381): Job created
+    req: {
+      "id": 2,
+      "method": "POST",
+      "url": "/api/upload"
+    }
+    jobId: 15
+    filename: "1774696715800-txxbgi3joo.mp4"
+[13:18:35.846] INFO (92381): request completed
+    req: {
+      "id": 2,
+      "method": "POST",
+      "url": "/api/upload"
+    }
+    res: {
+      "statusCode": 201
+    }
+    responseTime: 50
+[13:18:35.852] INFO (92381): request completed
+    req: {
+      "id": 3,
+      "method": "POST",
+      "url": "/api/process/15"
+    }
+    res: {
+      "statusCode": 200
+    }
+    responseTime: 3
+[13:18:35.853] INFO (92381): Starting detection pipeline
+    videoPath: "/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/uploads/1774696715800-txxbgi3joo.mp4"
+    reportPath: "/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/reports/report-15.xlsx"
+[13:18:35.853] INFO (92381): Spawning detection subprocess
+    pythonBin: "/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/.venv/bin/python3"
+    args: [
+      "/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/detect.py",
+      "/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/uploads/1774696715800-txxbgi3joo.mp4",
+      "yolov8n.pt"
+    ]
+    modelPath: "yolov8n.pt"
+[13:18:35.866] INFO (92381): request completed
+    req: {
+      "id": 4,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 200
+    }
+    responseTime: 1
+[13:18:35.869] INFO (92381): Processing: 1774696715800-txxbgi3joo.mp4
+    script: "detect.py"
+[13:18:35.869] INFO (92381): Annotated video output path: '' (empty=disabled)
+    script: "detect.py"
+[13:18:35.915] INFO (92381): Video: 1920x1080 @ 60.0fps, 60.0s
+    script: "detect.py"
+[13:18:37.274] INFO (92381): Using Ultralytics YOLO — model: yolov8n.pt
+    script: "detect.py"
+[13:18:38.385] INFO (92381): request completed
+    req: {
+      "id": 5,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 3
+[13:18:40.941] INFO (92381): request completed
+    req: {
+      "id": 6,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:18:43.475] INFO (92381): request completed
+    req: {
+      "id": 7,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:18:46.050] INFO (92381): request completed
+    req: {
+      "id": 8,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 3
+[13:18:48.560] INFO (92381): request completed
+    req: {
+      "id": 9,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:18:51.082] INFO (92381): request completed
+    req: {
+      "id": 10,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 6
+[13:18:53.598] INFO (92381): request completed
+    req: {
+      "id": 11,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 7
+[13:18:56.107] INFO (92381): request completed
+    req: {
+      "id": 12,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:18:58.615] INFO (92381): request completed
+    req: {
+      "id": 13,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:19:01.122] INFO (92381): request completed
+    req: {
+      "id": 14,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:20:17.210] INFO (92381): request completed
+    req: {
+      "id": 15,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 9
+[13:20:19.764] INFO (92381): request completed
+    req: {
+      "id": 16,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:20:20.979] INFO (92381): Detection complete, generating report
+    detections: 10015
+    tracks: 72
+[13:20:21.218] INFO (92381): Excel report written
+    outputPath: "/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/reports/report-15.xlsx"
+[13:20:21.226] INFO (92381): Processing complete
+    jobId: 15
+[13:20:22.272] INFO (92381): request completed
+    req: {
+      "id": 17,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 200
+    }
+    responseTime: 1
+
+
