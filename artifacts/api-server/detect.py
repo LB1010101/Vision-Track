@@ -248,9 +248,12 @@ def run_with_ultralytics(video_path, model_path, confidence, zones, frame_width,
 
     writer = None
     if output_video_path:
+        emit({"type": "log", "message": f"Opening video writer at: {output_video_path}"})
         writer = make_video_writer(output_video_path, fps, frame_width, frame_height)
         if writer is None:
-            emit({"type": "log", "message": "Warning: could not open video writer for annotated output"})
+            emit({"type": "log", "message": "Warning: could not open video writer — all codecs failed (avc1/H264/mp4v/XVID)"})
+        else:
+            emit({"type": "log", "message": "Video writer opened OK"})
 
     detections = []
     frame_idx = 0
@@ -328,6 +331,7 @@ def main():
     output_video_path = os.environ.get("VISIONTRACK_OUTPUT_VIDEO", "")
 
     emit({"type": "log", "message": f"Processing: {os.path.basename(video_path)}"})
+    emit({"type": "log", "message": f"Annotated video output path: '{output_video_path}' (empty=disabled)"})
 
     frame_width, frame_height, duration_s, fps = get_video_metadata(video_path)
     emit({"type": "log", "message": f"Video: {frame_width}x{frame_height} @ {fps:.1f}fps, {duration_s:.1f}s"})

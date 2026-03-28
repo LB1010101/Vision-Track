@@ -1,0 +1,470 @@
+ubuntu@axe-ubuntu-360:~/Downloads/Vision-Track/Vision-Track$ PORT=8080 DATABASE_URL=postgresql://visiontrack:visiontrack@localhost:5432/visiontrack VISIONTRACK_PYTHON=/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/.venv/bin/python3 pnpm --filter @workspace/api-server run dev
+
+> @workspace/api-server@0.0.0 dev /home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server
+> export NODE_ENV=development && pnpm run build && pnpm run start
+
+
+> @workspace/api-server@0.0.0 build /home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server
+> node ./build.mjs
+
+
+  dist/index.mjs                       4.4mb ⚠️
+  dist/pino-worker.mjs               153.4kb
+  dist/pino-file.mjs                 142.1kb
+  dist/pino-pretty.mjs               114.6kb
+  dist/thread-stream-worker.mjs        7.3kb
+  dist/index.mjs.map                   7.7mb
+  dist/pino-worker.mjs.map           256.9kb
+  dist/pino-file.mjs.map             229.1kb
+  dist/pino-pretty.mjs.map           203.9kb
+  dist/thread-stream-worker.mjs.map   12.0kb
+
+⚡ Done in 151ms
+
+> @workspace/api-server@0.0.0 start /home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server
+> node --enable-source-maps ./dist/index.mjs
+
+[13:02:12.272] INFO (91579): Server listening
+    port: 8080
+[13:03:01.817] INFO (91579): request completed
+    req: {
+      "id": 1,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 200
+    }
+    responseTime: 20
+[13:03:06.877] INFO (91579): Job created
+    req: {
+      "id": 2,
+      "method": "POST",
+      "url": "/api/upload"
+    }
+    jobId: 14
+    filename: "1774695786835-jfd0or18s0a.mp4"
+[13:03:06.878] INFO (91579): request completed
+    req: {
+      "id": 2,
+      "method": "POST",
+      "url": "/api/upload"
+    }
+    res: {
+      "statusCode": 201
+    }
+    responseTime: 46
+[13:03:06.891] INFO (91579): request completed
+    req: {
+      "id": 3,
+      "method": "POST",
+      "url": "/api/process/14"
+    }
+    res: {
+      "statusCode": 200
+    }
+    responseTime: 3
+[13:03:06.892] INFO (91579): Starting detection pipeline
+    videoPath: "/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/uploads/1774695786835-jfd0or18s0a.mp4"
+    reportPath: "/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/reports/report-14.xlsx"
+[13:03:06.892] INFO (91579): Spawning detection subprocess
+    pythonBin: "/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/.venv/bin/python3"
+    args: [
+      "/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/detect.py",
+      "/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/uploads/1774695786835-jfd0or18s0a.mp4",
+      "yolov8n.pt"
+    ]
+    modelPath: "yolov8n.pt"
+[13:03:06.907] INFO (91579): Processing: 1774695786835-jfd0or18s0a.mp4
+    script: "detect.py"
+[13:03:06.945] INFO (91579): request completed
+    req: {
+      "id": 4,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 200
+    }
+    responseTime: 1
+[13:03:06.953] INFO (91579): Video: 1920x1080 @ 60.0fps, 60.0s
+    script: "detect.py"
+[13:03:08.286] INFO (91579): Using Ultralytics YOLO — model: yolov8n.pt
+    script: "detect.py"
+[13:03:09.456] INFO (91579): request completed
+    req: {
+      "id": 5,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 3
+[13:03:11.981] INFO (91579): request completed
+    req: {
+      "id": 6,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 3
+[13:03:14.549] INFO (91579): request completed
+    req: {
+      "id": 7,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:03:17.062] INFO (91579): request completed
+    req: {
+      "id": 8,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:03:19.617] INFO (91579): request completed
+    req: {
+      "id": 9,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 3
+[13:03:22.133] INFO (91579): request completed
+    req: {
+      "id": 10,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:03:24.643] INFO (91579): request completed
+    req: {
+      "id": 11,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:03:42.851] INFO (91579): request completed
+    req: {
+      "id": 12,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 7
+[13:03:45.379] INFO (91579): request completed
+    req: {
+      "id": 13,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:03:47.887] INFO (91579): request completed
+    req: {
+      "id": 14,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:03:50.410] INFO (91579): request completed
+    req: {
+      "id": 15,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:03:52.918] INFO (91579): request completed
+    req: {
+      "id": 16,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:03:55.425] INFO (91579): request completed
+    req: {
+      "id": 17,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:03:57.936] INFO (91579): request completed
+    req: {
+      "id": 18,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:04:00.460] INFO (91579): request completed
+    req: {
+      "id": 19,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:04:02.968] INFO (91579): request completed
+    req: {
+      "id": 20,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:04:05.478] INFO (91579): request completed
+    req: {
+      "id": 21,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:04:07.987] INFO (91579): request completed
+    req: {
+      "id": 22,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:04:10.515] INFO (91579): request completed
+    req: {
+      "id": 23,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:04:13.035] INFO (91579): request completed
+    req: {
+      "id": 24,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:04:15.543] INFO (91579): request completed
+    req: {
+      "id": 25,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:04:18.050] INFO (91579): request completed
+    req: {
+      "id": 26,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:04:20.595] INFO (91579): request completed
+    req: {
+      "id": 27,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:04:23.111] INFO (91579): request completed
+    req: {
+      "id": 28,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 5
+[13:04:25.621] INFO (91579): request completed
+    req: {
+      "id": 29,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 4
+[13:04:28.130] INFO (91579): request completed
+    req: {
+      "id": 30,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 3
+[13:04:30.714] INFO (91579): request completed
+    req: {
+      "id": 31,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:04:33.226] INFO (91579): request completed
+    req: {
+      "id": 32,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:04:35.737] INFO (91579): request completed
+    req: {
+      "id": 33,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:04:38.247] INFO (91579): request completed
+    req: {
+      "id": 34,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:04:40.845] INFO (91579): request completed
+    req: {
+      "id": 35,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:04:43.352] INFO (91579): request completed
+    req: {
+      "id": 36,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:04:45.860] INFO (91579): request completed
+    req: {
+      "id": 37,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:04:48.368] INFO (91579): request completed
+    req: {
+      "id": 38,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 2
+[13:04:50.896] INFO (91579): request completed
+    req: {
+      "id": 39,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 1
+[13:04:53.329] INFO (91579): Detection complete, generating report
+    detections: 10015
+    tracks: 72
+[13:04:53.526] INFO (91579): request completed
+    req: {
+      "id": 40,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 304
+    }
+    responseTime: 3
+[13:04:53.575] INFO (91579): Excel report written
+    outputPath: "/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/reports/report-14.xlsx"
+[13:04:53.576] INFO (91579): Processing complete
+    jobId: 14
+[13:04:56.034] INFO (91579): request completed
+    req: {
+      "id": 41,
+      "method": "GET",
+      "url": "/api/jobs"
+    }
+    res: {
+      "statusCode": 200
+    }
+    responseTime: 1
