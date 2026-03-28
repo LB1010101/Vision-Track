@@ -1,0 +1,36 @@
+ubuntu@axe-ubuntu-360:~/Downloads/Vision-Track/Vision-Track$ cd ~/Downloads/Vision-Track/Vision-Track
+
+BASE="https://raw.githubusercontent.com/LB1010101/vision-track/master"
+
+curl -fL "$BASE/artifacts/visiontrack/src/index.css" -o artifacts/visiontrack/src/index.css
+curl -fL "$BASE/artifacts/visiontrack/src/components/Layout.tsx" -o artifacts/visiontrack/src/components/Layout.tsx
+curl -fL "$BASE/artifacts/visiontrack/src/components/StatsBar.tsx" -o artifacts/visiontrack/src/components/StatsBar.tsx
+curl -fL "$BASE/artifacts/visiontrack/src/components/UploadZone.tsx" -o artifacts/visiontrack/src/components/UploadZone.tsx
+curl -fL "$BASE/artifacts/visiontrack/src/components/StatusBadge.tsx" -o artifacts/visiontrack/src/components/StatusBadge.tsx
+curl -fL "$BASE/artifacts/visiontrack/src/components/JobsTable.tsx" -o artifacts/visiontrack/src/components/JobsTable.tsx
+curl -fL "$BASE/artifacts/visiontrack/src/components/VideoPlayerModal.tsx" -o artifacts/visiontrack/src/components/VideoPlayerModal.tsx
+curl -fL "$BASE/artifacts/visiontrack/src/pages/Dashboard.tsx" -o artifacts/visiontrack/src/pages/Dashboard.tsx
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  3692  100  3692    0     0   2608      0  0:00:01  0:00:01 --:--:--  2609
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  2167  100  2167    0     0   1433      0  0:00:01  0:00:01 --:--:--  1433
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  2410  100  2410    0     0    868      0  0:00:02  0:00:02 --:--:--   868
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  4378  100  4378    0     0   1619      0  0:00:02  0:00:02 --:--:--  1619
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  1577  100  1577    0     0   2101      0 --:--:-- --:--:-- --:--:--  2099
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  7147  100  7147    0     0   6298      0  0:00:01  0:00:01 --:--:--  6302
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  3007  100  3007    0     0   1641      0  0:00:01  0:00:01 --:--:--  1641
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  2030  100  2030    0     0   1184      0  0:00:01  0:00:01 --:--:--  1184
