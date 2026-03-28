@@ -342,8 +342,6 @@ async function generateExcelReport(
           cfvo: [{ type: "min" }, { type: "max" }],
           color: { argb: "FF1E40AF" },
           showValue: true,
-          gradient: true,
-          border: false,
         } as ExcelJS.DataBarRuleType["dataBar"],
       }],
     });
@@ -358,8 +356,6 @@ async function generateExcelReport(
           cfvo: [{ type: "min" }, { type: "max" }],
           color: { argb: "FF059669" },
           showValue: true,
-          gradient: true,
-          border: false,
         } as ExcelJS.DataBarRuleType["dataBar"],
       }],
     });
@@ -420,8 +416,6 @@ async function generateExcelReport(
           cfvo: [{ type: "min" }, { type: "max" }],
           color: { argb: "FFD97706" },
           showValue: true,
-          gradient: true,
-          border: false,
         } as ExcelJS.DataBarRuleType["dataBar"],
       }],
     });
@@ -436,8 +430,6 @@ async function generateExcelReport(
           cfvo: [{ type: "min" }, { type: "max" }],
           color: { argb: "FF7C3AED" },
           showValue: true,
-          gradient: true,
-          border: false,
         } as ExcelJS.DataBarRuleType["dataBar"],
       }],
     });
@@ -504,8 +496,6 @@ async function generateExcelReport(
           cfvo: [{ type: "min" }, { type: "max" }],
           color: { argb: "FF1E40AF" },
           showValue: true,
-          gradient: true,
-          border: false,
         } as ExcelJS.DataBarRuleType["dataBar"],
       }],
     });
@@ -520,8 +510,6 @@ async function generateExcelReport(
           cfvo: [{ type: "min" }, { type: "max" }],
           color: { argb: "FF059669" },
           showValue: true,
-          gradient: true,
-          border: false,
         } as ExcelJS.DataBarRuleType["dataBar"],
       }],
     });
@@ -597,8 +585,6 @@ async function generateExcelReport(
           cfvo: [{ type: "min" }, { type: "max" }],
           color: { argb: "FFDC2626" },
           showValue: true,
-          gradient: true,
-          border: false,
         } as ExcelJS.DataBarRuleType["dataBar"],
       }],
     });
