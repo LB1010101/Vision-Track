@@ -381,7 +381,7 @@ async function generateExcelReport(
     { property: "Analysis Date", value: new Date().toISOString() },
     { property: "Detection Backend", value: process.env["VISIONTRACK_BACKEND"] ?? "Axelera Voyager / Ultralytics YOLO" },
     { property: "Model", value: getModelPath() },
-    { property: "Confidence Threshold", value: process.env["VISIONTRACK_CONFIDENCE"] ?? "0.35" },
+    { property: "Confidence Threshold", value: process.env["VISIONTRACK_CONFIDENCE"] ?? "0.7" },
   ]);
 
   // Highlight total detections and tracked objects in bold blue.
