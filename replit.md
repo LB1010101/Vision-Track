@@ -4,7 +4,7 @@
 
 VisionTrack — a local CCTV video analytics platform deployed on a Lenovo P360 running Ubuntu with an Axelera AI M.2 card.
 
-Users upload video footage via a browser. The server runs object detection and tracking (Axelera Voyager SDK → Ultralytics YOLO + ByteTrack → mock fallback), generates a 6-sheet Excel analytics report with embedded charts, and produces an annotated video with bounding boxes for post-processing review.
+Users upload video footage via a browser. The server runs object detection and tracking (Axelera Voyager SDK → Ultralytics YOLO26 + ByteTrack → mock fallback), generates a 6-sheet Excel analytics report with embedded charts, and produces an annotated video with bounding boxes for post-processing review.
 
 pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
 
@@ -23,7 +23,8 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Excel generation**: ExcelJS 4.x — 6-sheet workbook with embedded PNG charts (no conditional formatting — all `addConditionalFormatting` calls removed due to ExcelJS 4.x bug)
 - **Chart rendering**: `@resvg/resvg-js` (WASM SVG→PNG renderer — no browser/canvas native bindings needed)
 - **File upload**: multer (multipart/form-data, max 2 GB)
-- **Video annotation**: Python `detect.py` via subprocess — YOLO `result.plot()` + FFmpeg H.264 re-encode
+- **Detection model**: Ultralytics YOLO26 (`yolo26n.pt` default) — upgraded from YOLOv8; auto-downloaded on first run
+- **Video annotation**: Python `detect.py` via subprocess — YOLO26 `result.plot()` + FFmpeg H.264 re-encode
 
 ## Structure
 
@@ -60,8 +61,12 @@ artifacts-monorepo/
 ├── tsconfig.base.json                    # Shared TS options (composite, bundler resolution, es2022)
 ├── tsconfig.json                         # Root project references
 ├── package.json                          # Root package with hoisted devDeps
-└── HANDOVER.md                           # Full handover doc for P360 deployment
+├── HANDOVER.md                           # Full handover doc for P360 deployment
+├── VisionTrack-Proposal.html             # Sales proposal (HTML — open in browser, Ctrl+P to save as PDF)
+└── VisionTrack-Proposal.docx             # Sales proposal (Word — editable; regenerated via code_execution)
 ```
+
+**Proposal files are also served statically** from `artifacts/visiontrack/public/` so they are browser-accessible during development.
 
 ## API Endpoints
 
@@ -136,6 +141,8 @@ pnpm --filter @workspace/api-spec run codegen
 - **DB schema must be pushed on first setup**: Run `pnpm --filter @workspace/db run push` after first clone or after any schema change. Missing the `annotated_video_path` column will silently cause the play button not to appear.
 - **GitHub sync required for P360 updates**: The Replit `gitsafe-backup` remote is not reachable externally. Push to GitHub (`git push github master`) then pull on P360.
 - **esbuild does not type-check**: Mismatched function call signatures will compile silently and only fail at runtime. When adding parameters to exported functions, always update all callers.
+- **Word proposal is a binary `.docx`**: `sed` cannot patch it. To update content, use the `docx` npm package via `code_execution` and regenerate the file — then copy it to `artifacts/visiontrack/public/`.
+- **YOLO26 model auto-downloads on first run**: `yolo26n.pt` is pulled from Ultralytics servers the first time `detect.py` runs on the P360. Ensure internet access is available for first use, or pre-download to the working directory.
 
 ## P360 Startup Commands
 
