@@ -134,19 +134,25 @@ def make_video_writer(output_path, fps, width, height):
             return writer
     return None
 
-def reencode_with_ffmpeg(input_path, output_path):
-    """Re-encode to H.264 MP4 using FFmpeg for browser compatibility."""
+def reencode_with_ffmpeg(input_path, output_path, fps=None):
+    """Re-encode to H.264 MP4 using FFmpeg for browser compatibility.
+
+    Pass fps to force the output frame rate explicitly — without this, OpenCV's
+    mp4v container can carry incorrect timing metadata, causing the annotated
+    video to play back slower than the original.
+    """
     import subprocess
     try:
-        result = subprocess.run(
-            [
-                "ffmpeg", "-y", "-i", input_path,
-                "-vcodec", "libx264", "-preset", "fast",
-                "-crf", "23", "-movflags", "+faststart",
-                "-an", output_path
-            ],
-            capture_output=True, timeout=600
-        )
+        cmd = ["ffmpeg", "-y", "-i", input_path]
+        if fps is not None:
+            # Force output frame rate to match the source exactly.
+            cmd += ["-r", str(round(fps, 6))]
+        cmd += [
+            "-vcodec", "libx264", "-preset", "fast",
+            "-crf", "23", "-movflags", "+faststart",
+            "-an", output_path
+        ]
+        result = subprocess.run(cmd, capture_output=True, timeout=600)
         return result.returncode == 0
     except Exception:
         return False
@@ -362,7 +368,7 @@ def main():
     resolved_annotated_path = ""
     if output_video_path and os.path.exists(raw_annotated_path):
         emit({"type": "log", "message": "Re-encoding annotated video to H.264 for browser playback..."})
-        if reencode_with_ffmpeg(raw_annotated_path, final_annotated_path):
+        if reencode_with_ffmpeg(raw_annotated_path, final_annotated_path, fps=fps):
             os.remove(raw_annotated_path)
             resolved_annotated_path = final_annotated_path
             emit({"type": "log", "message": f"Annotated video saved: {os.path.basename(final_annotated_path)}"})
