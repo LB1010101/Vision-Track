@@ -15,7 +15,7 @@ Usage:
   python3 detect.py <video_path> [model_path]
 
 Environment variables:
-  VISIONTRACK_MODEL           Path to model file (default: yolov8n.pt)
+  VISIONTRACK_MODEL           Path to model file (default: yolo26n.pt)
   VISIONTRACK_CONFIDENCE      Minimum confidence threshold (default: 0.35)
   VISIONTRACK_DEVICE          Device override: 'cpu', 'cuda', 'axelera' (default: auto-detect)
   VISIONTRACK_ZONES           JSON array of zone polygons
@@ -320,7 +320,7 @@ def main():
 
     model_path = (
         sys.argv[2] if len(sys.argv) > 2
-        else os.environ.get("VISIONTRACK_MODEL", "yolov8n.pt")
+        else os.environ.get("VISIONTRACK_MODEL", "yolo26n.pt")
     )
     confidence = float(os.environ.get("VISIONTRACK_CONFIDENCE", "0.7"))
     zones_json = os.environ.get("VISIONTRACK_ZONES", "")

@@ -204,7 +204,7 @@ Tries inference backends in order:
 Uses the compiled `.axm` model on the Axelera M.2 AI card. Returns hardware-accelerated bounding boxes with track IDs.
 
 **2. Ultralytics YOLO** (fallback)  
-Uses `model.track()` with ByteTrack for multi-object tracking. Automatically downloads `yolov8n.pt` (~6 MB) on first run. Uses `result.plot()` to draw annotations.
+Uses `model.track()` with ByteTrack for multi-object tracking. Automatically downloads `yolo26n.pt` (~6 MB) on first run. Uses `result.plot()` to draw annotations.
 
 **Annotated video:** On every frame, bounding boxes + class labels + track IDs are drawn. OpenCV VideoWriter tries multiple codecs (`avc1`, `H264`, `mp4v`, `XVID`) — the first one that opens successfully is used. The raw output is then re-encoded to H.264 via `ffmpeg -vcodec libx264 +faststart` for browser compatibility. On P360 Ubuntu, hardware H.264 encoding via `h264_v4l2m2m` may produce warnings in stderr — this is harmless; `mp4v` is used as the working codec and re-encoding via libx264 still succeeds.
 
@@ -268,7 +268,7 @@ The `/api/video/:jobId` endpoint serves the file with `Content-Range` header sup
 | `PORT`                   | **required** | Port the API server listens on (use `8080`)              |
 | `DATABASE_URL`           | **required** | PostgreSQL connection string                             |
 | `VISIONTRACK_PYTHON`     | `python3`    | Path to Python executable with ultralytics installed     |
-| `VISIONTRACK_MODEL`      | `yolov8n.pt` | YOLO model file path (or `.axm` for Axelera)            |
+| `VISIONTRACK_MODEL`      | `yolo26n.pt` | YOLO model file path (or `.axm` for Axelera)            |
 | `VISIONTRACK_CONFIDENCE` | `0.7`        | Minimum detection confidence (0.0–1.0)                  |
 | `VISIONTRACK_ZONES`      | *(none)*     | JSON array of named polygon zones (see below)            |
 | `VISIONTRACK_MOCK`       | `false`      | Set `true` to skip Python and use simulated data        |
@@ -433,15 +433,15 @@ Once the Python venv is set up (step 8 above), pass `VISIONTRACK_PYTHON` when st
 VISIONTRACK_PYTHON=/home/ubuntu/Downloads/Vision-Track/Vision-Track/artifacts/api-server/.venv/bin/python3
 ```
 
-On first use, `yolov8n.pt` (~6 MB) is downloaded automatically from Ultralytics.
+On first use, `yolo26n.pt` (~6 MB) is downloaded automatically from Ultralytics.
 
 **Model options** (larger = more accurate, slower):
 
 ```bash
-VISIONTRACK_MODEL=yolov8n.pt    # nano — fastest (default)
-VISIONTRACK_MODEL=yolov8s.pt    # small — good balance
-VISIONTRACK_MODEL=yolov8m.pt    # medium — better accuracy
-VISIONTRACK_MODEL=yolov8l.pt    # large — high accuracy, slow
+VISIONTRACK_MODEL=yolo26n.pt    # nano — fastest (default)
+VISIONTRACK_MODEL=yolo26s.pt    # small — good balance
+VISIONTRACK_MODEL=yolo26m.pt    # medium — better accuracy
+VISIONTRACK_MODEL=yolo26l.pt    # large — high accuracy, slow
 ```
 
 **Confidence threshold** (default 0.7 — only 70%+ confident detections):
@@ -513,7 +513,7 @@ The script (`detect.py`) tries `import axelera.runtime` first. If it succeeds, t
 | `make_video_writer(path, fps, w, h)` | Creates an OpenCV VideoWriter, tries multiple codecs (avc1, H264, mp4v, XVID) |
 | `reencode_with_ffmpeg(input, output)` | Re-encodes a video to H.264 MP4 with `+faststart` for browser streaming |
 | `run_with_axelera(...)` | Attempts Axelera Voyager SDK inference; returns `None` if SDK not installed |
-| `run_with_ultralytics(...)` | Runs YOLOv8 + ByteTrack; draws annotations using `result.plot()`; writes annotated video |
+| `run_with_ultralytics(...)` | Runs YOLO26 + ByteTrack; draws annotations using `result.plot()`; writes annotated video |
 | `emit(obj)` | Writes a JSON object to `stdout` immediately (flush=True) |
 
 **Output format (NDJSON on stdout):**
@@ -539,7 +539,7 @@ The script (`detect.py`) tries `import axelera.runtime` first. If it succeeds, t
 | `generateLineChartSvg(data, title, color)` | Generates a line/area chart as an SVG string |
 | `svgToPng(svg)` | Converts SVG string to PNG Buffer using `@resvg/resvg-js` (WASM — no browser needed) |
 | `getPythonBin()` | Returns `VISIONTRACK_PYTHON` env var or falls back to `python3` |
-| `getModelPath()` | Returns `VISIONTRACK_MODEL` env var or falls back to `yolov8n.pt` |
+| `getModelPath()` | Returns `VISIONTRACK_MODEL` env var or falls back to `yolo26n.pt` |
 
 ---
 

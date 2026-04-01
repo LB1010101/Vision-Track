@@ -1,0 +1,143 @@
+Update the VisionTrack project to use Ultralytics YOLO26 instead of YOLOv8 for all detection and tracking.
+
+### Context
+
+* The backend uses a Python script: `artifacts/api-server/detect.py`
+* Detection currently uses Ultralytics YOLOv8 (`yolov8n.pt`)
+* The Node.js API (`detection.ts`) passes environment variables to the Python subprocess
+* The system already supports model selection via `VISIONTRACK_MODEL`
+
+---
+
+### Goals
+
+1. Replace YOLOv8 with YOLO26 (`yolo26n.pt`) as the default model
+2. Ensure tracking still works using ByteTrack
+3. Keep full compatibility with:
+
+   * NDJSON output format
+   * Annotated video generation
+   * Excel report pipeline
+4. Do NOT break Axelera fallback logic
+
+---
+
+### Required Changes
+
+#### 1. Update Default Model
+
+In `detect.py`, locate where the model path is set.
+
+Change:
+
+```python
+model_path = os.getenv("VISIONTRACK_MODEL", "yolov8n.pt")
+```
+
+To:
+
+```python
+model_path = os.getenv("VISIONTRACK_MODEL", "yolo26n.pt")
+```
+
+---
+
+#### 2. Ensure YOLO is Loaded Dynamically
+
+Replace any hardcoded model loading like:
+
+```python
+model = YOLO("yolov8n.pt")
+```
+
+With:
+
+```python
+model = YOLO(model_path)
+```
+
+---
+
+#### 3. Ensure Tracking is Used (NOT predict)
+
+Confirm that detection uses tracking:
+
+```python
+results = model.track(
+    source=video_path,
+    persist=True,
+    conf=confidence,
+    tracker="bytetrack.yaml"
+)
+```
+
+If `predict()` is used anywhere for video processing, replace it with `track()`.
+
+---
+
+#### 4. Keep Class Mapping Compatible
+
+Ensure existing logic that maps:
+
+* car
+* truck
+* bus
+* person
+
+still works using:
+
+```python
+model.names
+```
+
+Do not hardcode class indexes.
+
+---
+
+#### 5. Update Node Defaults (Optional but Recommended)
+
+In `detection.ts`, update default model reference from:
+
+```ts
+"yolov8n.pt"
+```
+
+To:
+
+```ts
+"yolo26n.pt"
+```
+
+---
+
+#### 6. Do NOT Modify:
+
+* NDJSON output structure
+* Excel generation logic
+* Video annotation pipeline
+* Axelera detection branch
+
+---
+
+### Validation Steps
+
+After changes:
+
+1. Run the API server
+2. Upload a video
+3. Confirm logs show:
+
+   * `yolo26n.pt` being used
+4. Confirm:
+
+   * Annotated video is generated
+   * Excel report still works
+   * Tracking IDs are present
+
+---
+
+### Expected Outcome
+
+* YOLO26 is now the default detection model
+* Tracking and analytics behave exactly as before
+* No regression in pipeline functionality

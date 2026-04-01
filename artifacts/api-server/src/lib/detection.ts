@@ -10,7 +10,7 @@
  *
  * Key environment variables consumed here:
  *   VISIONTRACK_PYTHON     — path to the Python executable (defaults to python3)
- *   VISIONTRACK_MODEL      — YOLO model file or Axelera .axm path (defaults to yolov8n.pt)
+ *   VISIONTRACK_MODEL      — YOLO model file or Axelera .axm path (defaults to yolo26n.pt)
  *   VISIONTRACK_CONFIDENCE — minimum confidence threshold (defaults to 0.7)
  *   VISIONTRACK_ZONES      — JSON array of named polygon zones
  *   VISIONTRACK_MOCK       — set "true" to skip Python entirely (for dev without GPU)
@@ -68,7 +68,7 @@ function getPythonBin(): string {
 
 /** Returns the model path to use, preferring VISIONTRACK_MODEL env var. */
 function getModelPath(): string {
-  return process.env["VISIONTRACK_MODEL"] ?? "yolov8n.pt";
+  return process.env["VISIONTRACK_MODEL"] ?? "yolo26n.pt";
 }
 
 /**
